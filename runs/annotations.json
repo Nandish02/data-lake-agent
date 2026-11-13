@@ -1,0 +1,93 @@
+{
+  "runs/k-1-d-1_task_2/strong__qwen3.5_9b/20261030-213031.traj.json": {
+    "summary": "Explore → inspect → compute → answer, correct in 11 steps.",
+    "1": "Starts by looking at the top of the lake.",
+    "2": "Lists all datasets. Note the decoy: lottery-aid-to-education.",
+    "3": "Picks the right folder by name: lottery-ny-lotto-winning-numbers.",
+    "4": "headers.txt turns out to be web-crawl metadata, not data, so it moves on.",
+    "6": "Checks the other files one by one: columns.txt, data.txt…",
+    "8": "Finds the real data: rows.txt is a CSV with Draw Date and Bonus #.",
+    "9": "First script crashes (int + str). A normal bug…",
+    "10": "…which it reads, fixes and re-runs: BVAL per year, max = 2007.",
+    "11": "Submits in the exact required format: [2007]."
+  },
+  "runs/k-1-d-1_task_2/small__qwen2.5_3b/20261030-212541.traj.json": {
+    "summary": "Invents a file, then repeats the same broken command until the step limit.",
+    "1": "Searches for a file it imagines exists: nylotto*.csv. Nothing is found.",
+    "2": "The output was empty, yet it says 'I found a file named nylotto.csv'. It also assumes a 'Bonus Ball' column (the real one is 'Bonus #') and never groups by year.",
+    "3": "Bash quoting bug: single quotes inside python3 -c '…' end the string early. It says it fixed it, and sends the identical command.",
+    "4": "Changes the code around the bug, never the bug itself.",
+    "6": "From here on, every step repeats one of two broken commands. It never reads the error closely, and never runs ls."
+  },
+  "runs/k-1-d-1_task_3/strong__qwen3.5_9b/20261030-213452.traj.json": {
+    "summary": "Finds the right file, drops 2005, gets NaN for 2006, explains it away and answers 2010.",
+    "3": "Picks the system-wide annual totals dataset. That is a valid source here: computed correctly, it also gives 2006.",
+    "8": "Keeps only the years the question names, 2006–2010. 2005 is gone, and 2006's change will be NaN.",
+    "9": "2006 comes out NaN. It even wonders whether it needs 2005…",
+    "10": "…then says there's \"no prior year data in our dataset\" (false) and submits [2010]. Wrong.",
+    "7": "Finds the data: rows.txt has year and bus columns, 2005 included.",
+    "_tags": {
+      "8": [
+        "wrong_assumption"
+      ],
+      "10": [
+        "premature_answer"
+      ]
+    }
+  },
+  "runs/k-1-d-1_task_2/llama3.2-3b__llama3.2_3b/20261030-213833.traj.json": {
+    "summary": "Three format errors in a row, so the agent aborts before running a single command.",
+    "1": "Uses ```bash instead of ```mswea_bash_command, and copies a prompt line it was never meant to repeat."
+  },
+  "runs/k-1-d-1_task_3/llama3.2-3b__llama3.2_3b/20261030-213847.traj.json": {
+    "summary": "Never lists the lake, invents file names, then guesses and submits nothing.",
+    "4": "find printed nothing, yet the model says 'The find command found a file': it imagined the observation.",
+    "8": "Guesses [2006] with zero evidence. It's the right number, but only by luck (the first year in the range).",
+    "9": "Submits the marker alone; the answer was printed in the previous step, so the submission is empty."
+  },
+  "runs/k-1-d-1_task_2/strong__gpt-6-luna/20261113-102937.traj.json": {
+    "summary": "Explore → inspect → compute → answer, correct in 6 steps.",
+    "1": "One targeted search finds both lottery folders. The decoy, lottery-aid-to-education, is in the list too.",
+    "2": "Picks the winning-numbers folder and lists every file in it.",
+    "3": "columns.txt and data.txt turn out not to be the draw records.",
+    "4": "Prints every file at once. Too much output, so mini-swe-agent sends back a warning with only the start and end.",
+    "5": "Enough to spot the data: one Python script on rows.txt, keeping 2005–2010, BVAL per year. 2007 wins by 0.13.",
+    "6": "Submits in the exact required format: [2007]."
+  },
+  "runs/k-1-d-1_task_3/strong__gpt-6-luna/20261113-110720.traj.json": {
+    "summary": "Explore → inspect → compute → answer, correct in 9 steps.",
+    "1": "One search for 'cta' finds the four CTA folders, plus a life-expectancy decoy (ex-pe-cta-ncy).",
+    "2": "Picks the annual totals folder: one row per year sounds right for a yearly question.",
+    "3": "columns.txt and data.txt: neither is the table.",
+    "5": "A 35 KB crawl-header file: too long, so it only gets a warning with the start and end.",
+    "7": "Prints the start of every file in the folder, and rows.txt shows year,bus,… — the data.",
+    "8": "rows[y-1]: for 2006 that's 2005. It reaches back a year the question never mentions. 2006 is lowest.",
+    "9": "Submits [2006]. Correct."
+  },
+  "_gallery": [
+    {
+      "mode": "bad_format",
+      "run": "runs/k-1-d-1_task_2/llama3.2-3b__llama3.2_3b/20261030-213833.traj.json",
+      "step": 1,
+      "caption": "llama3.2:3b uses ```bash instead of ```mswea_bash_command, so the parser finds 0 valid actions and nothing runs. After three in a row, the run is aborted before one command has executed."
+    },
+    {
+      "mode": "wrong_assumption",
+      "run": "runs/k-1-d-1_task_2/small__qwen2.5_3b/20261030-212541.traj.json",
+      "step": 2,
+      "caption": "find returned nothing, but qwen2.5:3b says 'I found a file named nylotto.csv', and assumes a 'Bonus Ball' column. The real data is files/rows.txt with a 'Bonus #' column."
+    },
+    {
+      "mode": "repeated_failure",
+      "run": "runs/k-1-d-1_task_2/small__qwen2.5_3b/20261030-212541.traj.json",
+      "step": 3,
+      "caption": "Same quoting bug for 18 steps: single quotes inside python3 -c '…'. Each time it claims to have fixed it and resends the same command, until the step limit."
+    },
+    {
+      "mode": "premature_answer",
+      "run": "runs/k-1-d-1_task_3/llama3.2-3b__llama3.2_3b/20261030-213847.traj.json",
+      "step": 8,
+      "caption": "Without reading a single data file, llama3.2:3b echoes a guess, then submits the marker without the answer. Confident, unsupported and unscorable."
+    }
+  ]
+}

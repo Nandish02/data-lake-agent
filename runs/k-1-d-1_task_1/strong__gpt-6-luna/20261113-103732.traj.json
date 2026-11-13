@@ -1,0 +1,1186 @@
+{
+  "info": {
+    "model_stats": {
+      "instance_cost": 0.002428465,
+      "api_calls": 8
+    },
+    "config": {
+      "agent": {
+        "system_template": "You are a data agent that answers questions by exploring a data lake with bash commands.\n\nYour response must contain exactly ONE bash code block with ONE command (or commands connected with && or ||).\nInclude a THOUGHT section before your command where you explain your reasoning process.\nFormat your response as shown in <format_example>.\n\n<format_example>\nTHOUGHT: Your reasoning and analysis here. Explain why you want to perform the action.\n\n```mswea_bash_command\nyour_command_here\n```\n</format_example>\n\nFailure to follow these rules will cause your response to be rejected.\n",
+        "instance_template": "Answer this question using the data in the data lake:\n\n<question>\n{{task}}\n</question>\n\nThe current directory is the root of the data lake. It contains many dataset folders\n(e.g. `datagov/<dataset-name>/` and `wikipedia/<page-name>/`) with data files, metadata and documentation.\nMost of them are NOT relevant to the question. File extensions can be misleading\n(for example, a `.txt` file may contain CSV or JSON).\n\n## Recommended Workflow\n\n1. Explore the lake to find the dataset(s) that can answer the question\n2. Inspect the relevant files: schema, column meanings, units, date formats, documentation\n3. Compute the answer with a script (python3 with pandas is available)\n4. Sanity-check the result (e.g. look at intermediate values)\n5. Submit your final answer by issuing exactly this command, replacing ANSWER with your answer:\n   `echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT && echo \"[ANSWER]\"`\n   <important>After this command, you cannot continue working on this task.</important>\n\n## Important Rules\n\n1. Every response must contain exactly one action\n2. The action must be enclosed in triple backticks\n3. Directory or environment variable changes are not persistent. Every action is executed in a new subshell.\n4. Do not print entire large files; use head, wc, grep or a script instead. Long outputs are truncated.\n\n<system_information>\n{{system}} {{release}} {{machine}}\n</system_information>\n\n## Formatting your response\n\nHere is an example of a correct response:\n\n<example_response>\nTHOUGHT: I need to find out which datasets are in the lake first.\n\n```mswea_bash_command\nls datagov wikipedia\n```\n</example_response>\n\n## Useful command examples\n\n### Look at the first lines of a file:\n\n```mswea_bash_command\nhead -n 5 path/to/file.txt\n```\n\n### Run a multi-line python script:\n\n```mswea_bash_command\npython3 - <<'EOF'\nimport pandas as pd\ndf = pd.read_csv(\"path/to/file.txt\")\nprint(df.head())\nEOF\n```\n",
+        "step_limit": 20,
+        "cost_limit": 1.0,
+        "wall_time_limit_seconds": 600,
+        "max_consecutive_format_errors": 3,
+        "output_path": "/Users/nandishchokshi/Desktop/data-agent-demo/runs/k-1-d-1_task_1/strong__gpt-6-luna/20261113-103732.traj.json"
+      },
+      "agent_type": "__main__.LiveAgent",
+      "model": {
+        "model_name": "openai/gpt-6-luna",
+        "model_kwargs": {
+          "drop_params": true,
+          "temperature": 0.0,
+          "api_base": "https://<your-resource>.services.ai.azure.com/openai/v1"
+        },
+        "litellm_model_registry": null,
+        "set_cache_control": null,
+        "cost_tracking": "ignore_errors",
+        "format_error_template": "{% if finish_reason is defined and finish_reason in [\"length\", \"tool_calls\"] -%}\nYour previous response reached the output token limit (finish_reason={{ finish_reason }}) before you produced a complete action, so it was cut off. Respond more concisely and provide exactly one action in the required format.\n{%- else -%}\nFormat error:\n\n<error>\n{{error}}\n</error>\n\nPlease always provide EXACTLY ONE action in triple backticks, found {{actions|length}} actions.\n\nPlease format your action in triple backticks as shown in <response_example>.\n\n<response_example>\nTHOUGHT: Here are some thoughts about why you want to perform the action.\n\n```mswea_bash_command\n<action>\n```\n</response_example>\n\nIf you have completed your assignment, please consult the first message about how to\nsubmit your answer (you will not be able to continue working on this task after that).\n{%- endif %}\n",
+        "observation_template": "{% if output.exception_info -%}\n<exception>{{output.exception_info}}</exception>\n{% endif -%}\n<returncode>{{output.returncode}}</returncode>\n{% if output.output | length < 6000 -%}\n<output>\n{{ output.output -}}\n</output>\n{%- else -%}\n<warning>\nThe output of your last command was too long.\nPlease try a different command that produces less output.\n</warning>\n{%- set elided_chars = output.output | length - 6000 -%}\n<output_head>\n{{ output.output[:3000] }}\n</output_head>\n<elided_chars>\n{{ elided_chars }} characters elided\n</elided_chars>\n<output_tail>\n{{ output.output[-3000:] }}\n</output_tail>\n{%- endif -%}\n",
+        "multimodal_regex": "",
+        "action_regex": "```mswea_bash_command\\s*\\n(.*?)\\n```"
+      },
+      "model_type": "minisweagent.models.litellm_textbased_model.LitellmTextbasedModel",
+      "environment": {
+        "cwd": "/var/folders/32/h8_0fnsj2hbcfr51x168c91r0000gn/T/datalake-demo/20261113-103732-gpt-6-luna",
+        "env": {
+          "PAGER": "cat",
+          "MANPAGER": "cat",
+          "LESS": "-R",
+          "PIP_PROGRESS_BAR": "off",
+          "TQDM_DISABLE": "1",
+          "PYTHONWARNINGS": "ignore",
+          "PATH": "/Users/nandishchokshi/Desktop/data-agent-demo/.venv/bin:/opt/homebrew/opt/gnu-sed/libexec/gnubin:/opt/homebrew/opt/coreutils/libexec/gnubin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/opt/homebrew/bin",
+          "OPENAI_API_KEY": ""
+        },
+        "timeout": 60
+      },
+      "environment_type": "__main__.GuardedLocalEnvironment"
+    },
+    "mini_version": "2.4.6",
+    "exit_status": "Submitted",
+    "submission": "[2021]\n"
+  },
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a data agent that answers questions by exploring a data lake with bash commands.\n\nYour response must contain exactly ONE bash code block with ONE command (or commands connected with && or ||).\nInclude a THOUGHT section before your command where you explain your reasoning process.\nFormat your response as shown in <format_example>.\n\n<format_example>\nTHOUGHT: Your reasoning and analysis here. Explain why you want to perform the action.\n\n```mswea_bash_command\nyour_command_here\n```\n</format_example>\n\nFailure to follow these rules will cause your response to be rejected."
+    },
+    {
+      "role": "user",
+      "content": "Answer this question using the data in the data lake:\n\n<question>\nFor each year from 2016 through 2023, compute a growth-amplified overdose burden score as annual drug overdose deaths across all U.S. states multiplied by (1 + year-over-year growth rate). Which year has the highest score? Your response should be in the format [Answer].\n</question>\n\nThe current directory is the root of the data lake. It contains many dataset folders\n(e.g. `datagov/<dataset-name>/` and `wikipedia/<page-name>/`) with data files, metadata and documentation.\nMost of them are NOT relevant to the question. File extensions can be misleading\n(for example, a `.txt` file may contain CSV or JSON).\n\n## Recommended Workflow\n\n1. Explore the lake to find the dataset(s) that can answer the question\n2. Inspect the relevant files: schema, column meanings, units, date formats, documentation\n3. Compute the answer with a script (python3 with pandas is available)\n4. Sanity-check the result (e.g. look at intermediate values)\n5. Submit your final answer by issuing exactly this command, replacing ANSWER with your answer:\n   `echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT && echo \"[ANSWER]\"`\n   <important>After this command, you cannot continue working on this task.</important>\n\n## Important Rules\n\n1. Every response must contain exactly one action\n2. The action must be enclosed in triple backticks\n3. Directory or environment variable changes are not persistent. Every action is executed in a new subshell.\n4. Do not print entire large files; use head, wc, grep or a script instead. Long outputs are truncated.\n\n<system_information>\nDarwin 25.5.0 arm64\n</system_information>\n\n## Formatting your response\n\nHere is an example of a correct response:\n\n<example_response>\nTHOUGHT: I need to find out which datasets are in the lake first.\n\n```mswea_bash_command\nls datagov wikipedia\n```\n</example_response>\n\n## Useful command examples\n\n### Look at the first lines of a file:\n\n```mswea_bash_command\nhead -n 5 path/to/file.txt\n```\n\n### Run a multi-line python script:\n\n```mswea_bash_command\npython3 - <<'EOF'\nimport pandas as pd\ndf = pd.read_csv(\"path/to/file.txt\")\nprint(df.head())\nEOF\n```"
+    },
+    {
+      "content": "THOUGHT: I\u2019ll locate datasets related to annual U.S. drug overdose deaths and inspect their files to identify the relevant state-level data.\n\n```mswea_bash_command\nfind . -iname '*overdose*' -o -iname '*drug*death*' | head -80\n```",
+      "role": "assistant",
+      "tool_calls": null,
+      "function_call": null,
+      "provider_specific_fields": {
+        "refusal": null
+      },
+      "annotations": [],
+      "extra": {
+        "actions": [
+          {
+            "command": "find . -iname '*overdose*' -o -iname '*drug*death*' | head -80"
+          }
+        ],
+        "response": {
+          "id": "chatcmpl-Ejoa2XN8dFzwShQUx2UuaPhBBeNlZ",
+          "created": 1794587898,
+          "model": "gpt-6-luna-2026-09-22",
+          "object": "chat.completion",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "message": {
+                "content": "THOUGHT: I\u2019ll locate datasets related to annual U.S. drug overdose deaths and inspect their files to identify the relevant state-level data.\n\n```mswea_bash_command\nfind . -iname '*overdose*' -o -iname '*drug*death*' | head -80\n```",
+                "role": "assistant",
+                "tool_calls": null,
+                "function_call": null,
+                "provider_specific_fields": {
+                  "refusal": null
+                },
+                "annotations": []
+              },
+              "provider_specific_fields": {
+                "content_filter_results": {
+                  "hate": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "protected_material_code": {
+                    "detected": false,
+                    "filtered": false
+                  },
+                  "protected_material_text": {
+                    "detected": false,
+                    "filtered": false
+                  },
+                  "self_harm": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "sexual": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "violence": {
+                    "filtered": false,
+                    "severity": "safe"
+                  }
+                }
+              }
+            }
+          ],
+          "usage": {
+            "completion_tokens": 102,
+            "prompt_tokens": 634,
+            "total_tokens": 736,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": 0,
+              "audio_tokens": 0,
+              "reasoning_tokens": 31,
+              "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0
+            },
+            "latency_checkpoint": {
+              "engine_tbt_ms": 11,
+              "engine_ttft_ms": 85,
+              "engine_ttlt_ms": 1235,
+              "pre_inference_ms": 559,
+              "service_tbt_ms": 11,
+              "service_ttft_ms": 941,
+              "service_ttlt_ms": 2061,
+              "user_visible_ttft_ms": 382
+            }
+          },
+          "moderation": null,
+          "service_tier": "default",
+          "prompt_filter_results": [
+            {
+              "prompt_index": 0,
+              "content_filter_results": {
+                "hate": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "jailbreak": {
+                  "detected": false,
+                  "filtered": false
+                },
+                "self_harm": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "sexual": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "violence": {
+                  "filtered": false,
+                  "severity": "safe"
+                }
+              }
+            }
+          ],
+          "routing": {
+            "serving_pipereplica": "d20261112164451-254e0661-prefill-r8-dp0-prefill"
+          }
+        },
+        "cost": 0.00011439999999999999,
+        "timestamp": 1794587901.130024
+      }
+    },
+    {
+      "role": "user",
+      "content": "<returncode>0</returncode>\n<output>\n./datagov/vsrr-provisional-drug-overdose-death-counts\n./datagov/vsrr-provisional-drug-overdose-death-counts/files/drug-overdose-data.txt\n</output>",
+      "extra": {
+        "raw_output": "./datagov/vsrr-provisional-drug-overdose-death-counts\n./datagov/vsrr-provisional-drug-overdose-death-counts/files/drug-overdose-data.txt\n",
+        "returncode": 0,
+        "timestamp": 1794587901.153316,
+        "exception_info": ""
+      }
+    },
+    {
+      "content": "THOUGHT: I found a provisional drug-overdose-deaths dataset. I\u2019ll inspect its files and metadata to determine the columns, coverage, and whether it supports annual totals by state.\n\n```mswea_bash_command\nfind datagov/vsrr-provisional-drug-overdose-death-counts -maxdepth 3 -type f\n```",
+      "role": "assistant",
+      "tool_calls": null,
+      "function_call": null,
+      "provider_specific_fields": {
+        "refusal": null
+      },
+      "annotations": [],
+      "extra": {
+        "actions": [
+          {
+            "command": "find datagov/vsrr-provisional-drug-overdose-death-counts -maxdepth 3 -type f"
+          }
+        ],
+        "response": {
+          "id": "chatcmpl-Ejoa59dHIIKvo1spUImEOUYTlbmmU",
+          "created": 1794587901,
+          "model": "gpt-6-luna-2026-09-22",
+          "object": "chat.completion",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "message": {
+                "content": "THOUGHT: I found a provisional drug-overdose-deaths dataset. I\u2019ll inspect its files and metadata to determine the columns, coverage, and whether it supports annual totals by state.\n\n```mswea_bash_command\nfind datagov/vsrr-provisional-drug-overdose-death-counts -maxdepth 3 -type f\n```",
+                "role": "assistant",
+                "tool_calls": null,
+                "function_call": null,
+                "provider_specific_fields": {
+                  "refusal": null
+                },
+                "annotations": []
+              },
+              "provider_specific_fields": {
+                "content_filter_results": {
+                  "hate": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "protected_material_code": {
+                    "detected": false,
+                    "filtered": false
+                  },
+                  "protected_material_text": {
+                    "detected": false,
+                    "filtered": false
+                  },
+                  "self_harm": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "sexual": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "violence": {
+                    "filtered": false,
+                    "severity": "safe"
+                  }
+                }
+              }
+            }
+          ],
+          "usage": {
+            "completion_tokens": 96,
+            "prompt_tokens": 764,
+            "total_tokens": 860,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": 0,
+              "audio_tokens": 0,
+              "reasoning_tokens": 14,
+              "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 0,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 0
+            },
+            "latency_checkpoint": {
+              "engine_tbt_ms": 8,
+              "engine_ttft_ms": 434,
+              "engine_ttlt_ms": 1235,
+              "pre_inference_ms": 99,
+              "service_tbt_ms": 8,
+              "service_ttft_ms": 612,
+              "service_ttlt_ms": 1407,
+              "user_visible_ttft_ms": 513
+            }
+          },
+          "moderation": null,
+          "service_tier": "default",
+          "prompt_filter_results": [
+            {
+              "prompt_index": 0,
+              "content_filter_results": {
+                "hate": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "jailbreak": {
+                  "detected": false,
+                  "filtered": false
+                },
+                "self_harm": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "sexual": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "violence": {
+                  "filtered": false,
+                  "severity": "safe"
+                }
+              }
+            }
+          ],
+          "routing": {
+            "serving_pipereplica": "d20261112164451-254e0661-prefill-r4-dp0-prefill"
+          }
+        },
+        "cost": 0.0001244,
+        "timestamp": 1794587903.67007
+      }
+    },
+    {
+      "role": "user",
+      "content": "<returncode>0</returncode>\n<output>\ndatagov/vsrr-provisional-drug-overdose-death-counts/headers.txt\ndatagov/vsrr-provisional-drug-overdose-death-counts/metadata.json\ndatagov/vsrr-provisional-drug-overdose-death-counts/signed-metadata.txt\ndatagov/vsrr-provisional-drug-overdose-death-counts/files/FINALVERSION_NVSS_methods_drug_adjustment_June_Release.pdf\ndatagov/vsrr-provisional-drug-overdose-death-counts/files/catalog.txt\ndatagov/vsrr-provisional-drug-overdose-death-counts/files/xkb8-kh2a.txt\ndatagov/vsrr-provisional-drug-overdose-death-counts/files/dcat-us.txt\ndatagov/vsrr-provisional-drug-overdose-death-counts/files/government-works.txt\ndatagov/vsrr-provisional-drug-overdose-death-counts/files/drug-overdose-data.txt\ndatagov/vsrr-provisional-drug-overdose-death-counts/files/data.txt\ndatagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt\n</output>",
+      "extra": {
+        "raw_output": "datagov/vsrr-provisional-drug-overdose-death-counts/headers.txt\ndatagov/vsrr-provisional-drug-overdose-death-counts/metadata.json\ndatagov/vsrr-provisional-drug-overdose-death-counts/signed-metadata.txt\ndatagov/vsrr-provisional-drug-overdose-death-counts/files/FINALVERSION_NVSS_methods_drug_adjustment_June_Release.pdf\ndatagov/vsrr-provisional-drug-overdose-death-counts/files/catalog.txt\ndatagov/vsrr-provisional-drug-overdose-death-counts/files/xkb8-kh2a.txt\ndatagov/vsrr-provisional-drug-overdose-death-counts/files/dcat-us.txt\ndatagov/vsrr-provisional-drug-overdose-death-counts/files/government-works.txt\ndatagov/vsrr-provisional-drug-overdose-death-counts/files/drug-overdose-data.txt\ndatagov/vsrr-provisional-drug-overdose-death-counts/files/data.txt\ndatagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt\n",
+        "returncode": 0,
+        "timestamp": 1794587903.686672,
+        "exception_info": ""
+      }
+    },
+    {
+      "content": "THOUGHT: The dataset includes a dedicated drug overdose data file. I\u2019ll inspect its header and a few rows, along with the dataset metadata, to verify the date and death-count fields before calculating annual totals.\n\n```mswea_bash_command\ncat datagov/vsrr-provisional-drug-overdose-death-counts/headers.txt; head -n 5 datagov/vsrr-provisional-drug-overdose-death-counts/files/drug-overdose-data.txt; head -c 3000 datagov/vsrr-provisional-drug-overdose-death-counts/metadata.json\n```",
+      "role": "assistant",
+      "tool_calls": null,
+      "function_call": null,
+      "provider_specific_fields": {
+        "refusal": null
+      },
+      "annotations": [],
+      "extra": {
+        "actions": [
+          {
+            "command": "cat datagov/vsrr-provisional-drug-overdose-death-counts/headers.txt; head -n 5 datagov/vsrr-provisional-drug-overdose-death-counts/files/drug-overdose-data.txt; head -c 3000 datagov/vsrr-provisional-drug-overdose-death-counts/metadata.json"
+          }
+        ],
+        "response": {
+          "id": "chatcmpl-EjoaAVkhLFrWvFPZegPqSumrc8S8V",
+          "created": 1794587906,
+          "model": "gpt-6-luna-2026-09-22",
+          "object": "chat.completion",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "message": {
+                "content": "THOUGHT: The dataset includes a dedicated drug overdose data file. I\u2019ll inspect its header and a few rows, along with the dataset metadata, to verify the date and death-count fields before calculating annual totals.\n\n```mswea_bash_command\ncat datagov/vsrr-provisional-drug-overdose-death-counts/headers.txt; head -n 5 datagov/vsrr-provisional-drug-overdose-death-counts/files/drug-overdose-data.txt; head -c 3000 datagov/vsrr-provisional-drug-overdose-death-counts/metadata.json\n```",
+                "role": "assistant",
+                "tool_calls": null,
+                "function_call": null,
+                "provider_specific_fields": {
+                  "refusal": null
+                },
+                "annotations": []
+              },
+              "provider_specific_fields": {
+                "content_filter_results": {
+                  "hate": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "protected_material_code": {
+                    "detected": false,
+                    "filtered": false
+                  },
+                  "protected_material_text": {
+                    "detected": false,
+                    "filtered": false
+                  },
+                  "self_harm": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "sexual": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "violence": {
+                    "filtered": false,
+                    "severity": "safe"
+                  }
+                }
+              }
+            }
+          ],
+          "usage": {
+            "completion_tokens": 148,
+            "prompt_tokens": 1113,
+            "total_tokens": 1261,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": 0,
+              "audio_tokens": 0,
+              "reasoning_tokens": 11,
+              "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 1110,
+              "cached_tokens": 0,
+              "cache_creation_tokens": 1110
+            },
+            "latency_checkpoint": {
+              "engine_tbt_ms": 8,
+              "engine_ttft_ms": 123,
+              "engine_ttlt_ms": 1292,
+              "pre_inference_ms": 117,
+              "service_tbt_ms": 8,
+              "service_ttft_ms": 321,
+              "service_ttlt_ms": 1508,
+              "user_visible_ttft_ms": 204
+            }
+          },
+          "moderation": null,
+          "service_tier": "default",
+          "prompt_filter_results": [
+            {
+              "prompt_index": 0,
+              "content_filter_results": {
+                "hate": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "jailbreak": {
+                  "detected": false,
+                  "filtered": false
+                },
+                "self_harm": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "sexual": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "violence": {
+                  "filtered": false,
+                  "severity": "safe"
+                }
+              }
+            }
+          ],
+          "routing": {
+            "serving_pipereplica": "d20261112164451-254e0661-prefill-r4-dp0-prefill"
+          }
+        },
+        "cost": 0.00021305,
+        "timestamp": 1794587908.316753
+      }
+    },
+    {
+      "role": "user",
+      "content": "<returncode>0</returncode>\n<warning>\nThe output of your last command was too long.\nPlease try a different command that produces less output.\n</warning><output_head>\nWARC/1.0\nWARC-IP-Address: 104.102.97.35\nWARC-Type: revisit\nWARC-Record-ID: <urn:uuid:708643dc-3475-4ebd-a61c-dcfe61e6751c>\nWARC-Target-URI: https://www.cdc.gov/nchs/nvss/vsrr/drug-overdose-data.htm\nWARC-Date: 2024-12-15T11:42:57Z\nWARC-Payload-Digest: sha1:I6XKURDVR27OKZLMES64CSDDH7OBTCH7\nWARC-Profile: file-content; filename=\"files/drug-overdose-data.html\"\nWARC-Block-Digest: sha1:43IUO7RQLO72LG6OGIKORLADDYM4RDEM\nContent-Type: application/http; msgtype=response\nContent-Length: 685\n\nHTTP/1.1 200 OK\nContent-Type: text/html\nSRV: 5\nAccess-Control-Allow-Origin: *\nX-UA-Compatible: IE=edge\nAccess-Control-Allow-Headers: Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers\nVary: Accept-Encoding\nContent-Encoding: gzip\nContent-Length: 32934\nDate: Sun, 15 Dec 2024 11:42:57 GMT\nConnection: keep-alive\nSet-Cookie: akamai_visit_id=47fcc317629777ebf24Z; expires=Tue, 15-Dec-2026 11:42:57 GMT; path=/; domain=.cdc.gov; secure\nStrict-Transport-Security: max-age=31536000 ; includeSubDomains ; preload\nSet-Cookie: Akamai-Request-ID=47fcc317629777ebf24Z; path=/; domain=cdc.gov\n\n\n\nWARC/1.0\nWARC-IP-Address: 104.102.97.35\nWARC-Type: request\nWARC-Record-ID: <urn:uuid:5ea31e9d-7e84-4f2c-9096-f878bf5b7038>\nWARC-Target-URI: https://www.cdc.gov/nchs/nvss/vsrr/drug-overdose-data.htm\nWARC-Date: 2024-12-15T11:42:57Z\nWARC-Payload-Digest: sha1:3I42H3S6NNFQ2MSVX7XZKYAYSCX5QBYJ\nWARC-Concurrent-To: <urn:uuid:708643dc-3475-4ebd-a61c-dcfe61e6751c>\nWARC-Block-Digest: sha1:F5WG2FZBA4I3RTF2DX3JUSFZ42ZUHBRO\nContent-Type: application/http; msgtype=request\nContent-Length: 179\n\nGET /nchs/nvss/vsrr/drug-overdose-data.htm HTTP/1.1\nHost: www.cdc.gov\nUser-Agent: python-requests/2.32.3\nAccept-Encoding: gzip, deflate\nAccept: */*\nConnection: keep-alive\n\n\n\nWARC/1.0\nWARC-IP-Address: 52.206.140.205\nWARC-Type: revisit\nWARC-Record-ID: <urn:uuid:e2274135-e2c7-4205-b4da-c57074231afd>\nWARC-Target-URI: https://data.cdc.gov/api/views/xkb8-kh2a/rows.json?accessType=DOWNLOAD\nWARC-Date: 2024-12-15T11:42:59Z\nWARC-Payload-Digest: sha1:YPD3LANG4LBQKJKMWIRC3WLH5YNLB46N\nWARC-Profile: file-content; filename=\"files/rows.json\"\nWARC-Block-Digest: sha1:GN5I32SLWYDZVOYVAQZNPRX4MMGKEUIM\nContent-Type: application/http; msgtype=response\nContent-Length: 738\n\nHTTP/1.1 200 OK\nServer: nginx\nDate: Sun, 15 Dec 2024 11:42:58 GMT\nContent-Type: application/json; charset=utf-8\nTransfer-Encoding: chunked\nConnection: keep-alive\nAccess-Control-Allow-Origin: *\nETag: \"Z29sZi4xMTQzN180XzE1NnNIMzBzcW9MbktUVDExSnAxelI4YV9XVkFPTQ---gziuHLx5Qq7GbTybeNi0lz4arzJm06--gzip--gzip\"\nX-SODA2-Data-Out-Of-Date: false\nX-SODA2-Truth-Last-Modified: Wed, 11 Dec 2024 14:33:58 GMT\nX-SODA2-Secondary-Last-Modified: Wed, 11 Dec 2024 14:33:58 GMT\nLast-Modified: Wed, 11 Dec 2024 14:33:58 GMT\nVary: Accept-Encoding\nContent-Encoding: gzip\nAge: 2\nX-Socrata-Region: aws-us-east-1-fedramp-prod\nStrict-Transport-Security: max-age=31536000; includeSubDomains\nX-Socrata-RequestId: e4e6cdc0beaf3ef0\n</output_head>\n<elided_chars>\n21654 characters elided\n</elided_chars>\n<output_tail>\n:9126abc7-4d91-4235-84e0-1b33f82e22ca>\nWARC-Target-URI: https://project-open-data.cio.gov/v1.1/schema/catalog.json\nWARC-Date: 2024-12-15T11:43:14Z\nWARC-Payload-Digest: sha1:3I42H3S6NNFQ2MSVX7XZKYAYSCX5QBYJ\nWARC-Concurrent-To: <urn:uuid:ab81a8c1-5e52-49fb-92fc-89152681bec7>\nWARC-Block-Digest: sha1:ZH5RUHPUJ4TISR53UZZQSEAJYAHP4EOL\nContent-Type: application/http; msgtype=request\nContent-Length: 180\n\nGET /v1.1/schema/catalog.json HTTP/1.1\nHost: project-open-data.cio.gov\nUser-Agent: python-requests/2.32.3\nAccept-Encoding: gzip, deflate\nAccept: */*\nConnection: keep-alive\n\n\n\nWARC/1.0\nWARC-IP-Address: 18.161.21.128\nWARC-Type: revisit\nWARC-Record-ID: <urn:uuid:533c9580-c36f-47f0-9ffe-a246273e7570>\nWARC-Target-URI: https://resources.data.gov/schemas/dcat-us/v1.1/schema/catalog.json\nWARC-Date: 2024-12-15T11:43:14Z\nWARC-Payload-Digest: sha1:5VPO4VWTHK5P3DF7JHXDMD65JW224K37\nWARC-Profile: file-content; filename=\"files/catalog.json\"\nWARC-Block-Digest: sha1:M5GD3WHAFQNDUBNXOSWKEW2D4GYIXUZI\nContent-Type: application/http; msgtype=response\nContent-Length: 853\n\nHTTP/1.1 200 OK\nContent-Type: application/json\nContent-Length: 603\nConnection: keep-alive\nDate: Sun, 15 Dec 2024 11:42:31 GMT\nAccept-Ranges: bytes\nAccess-Control-Allow-Methods: GET, HEAD\nCache-Control: max-age=60\nContent-Encoding: gzip\nLast-Modified: Mon, 10 Oct 2022 15:31:12 GMT\nStrict-Transport-Security: max-age=31536000; preload\nX-Amz-Server-Side-Encryption: AES256\nX-Content-Type-Options: nosniff\nX-Robots-Tag: all\nX-Server: Cloud.gov Pages\nX-Vcap-Request-Id: 7a4c0940-03f3-4152-51e7-8d2438a04c83\nX-Xss-Protection: 1; mode=block\nX-Frame-Options: SAMEORIGIN\nETag: \"e0f8130f09c3c7620fd256f847c2c450\"\nVary: Accept-Encoding\nX-Cache: Hit from cloudfront\nVia: 1.1 f237197fd08ad2a2371cf58fb6ca3072.cloudfront.net (CloudFront)\nX-Amz-Cf-Pop: BOS50-P1\nX-Amz-Cf-Id: UHbC8bVjP4Mg1Qq0E0c1xq9dgwW4hgYlcZduthPW04Aaua14I7zsGg==\nAge: 42\n\n\n\nWARC/1.0\nWARC-IP-Address: 18.161.21.128\nWARC-Type: request\nWARC-Record-ID: <urn:uuid:0c26114c-8419-44e4-997c-b8f014a2ec2e>\nWARC-Target-URI: https://resources.data.gov/schemas/dcat-us/v1.1/schema/catalog.json\nWARC-Date: 2024-12-15T11:43:14Z\nWARC-Payload-Digest: sha1:3I42H3S6NNFQ2MSVX7XZKYAYSCX5QBYJ\nWARC-Concurrent-To: <urn:uuid:533c9580-c36f-47f0-9ffe-a246273e7570>\nWARC-Block-Digest: sha1:77QBDWZPWRLAQKLR5Y4RTSMV37SVPENT\nContent-Type: application/http; msgtype=request\nContent-Length: 189\n\nGET /schemas/dcat-us/v1.1/schema/catalog.json HTTP/1.1\nHost: resources.data.gov\nUser-Agent: python-requests/2.32.3\nAccept-Encoding: gzip, deflate\nAccept: */*\nConnection: keep-alive\n\n\n\nProducts - Vital Statistics Rapid Release - Provisional Drug Overdose Data\nSkip directly to site content\nSkip directly to search\nEspa\u00f1ol\n|\n{\n  \"source\": \"datagov\",\n  \"title\": \"vsrr-provisional-drug-overdose-death-counts\",\n  \"processed_at\": \"2025-12-19T14:15:10.902971\",\n  \"pipeline_version\": \"1.0.0\",\n  \"original_key\": \"harvard-lil/gov-data/collections/data_gov/vsrr-provisional-drug-overdose-death-counts/v1.zip\",\n  \"file_count\": 13\n}\n</output_tail>",
+      "extra": {
+        "raw_output": "WARC/1.0\nWARC-IP-Address: 104.102.97.35\nWARC-Type: revisit\nWARC-Record-ID: <urn:uuid:708643dc-3475-4ebd-a61c-dcfe61e6751c>\nWARC-Target-URI: https://www.cdc.gov/nchs/nvss/vsrr/drug-overdose-data.htm\nWARC-Date: 2024-12-15T11:42:57Z\nWARC-Payload-Digest: sha1:I6XKURDVR27OKZLMES64CSDDH7OBTCH7\nWARC-Profile: file-content; filename=\"files/drug-overdose-data.html\"\nWARC-Block-Digest: sha1:43IUO7RQLO72LG6OGIKORLADDYM4RDEM\nContent-Type: application/http; msgtype=response\nContent-Length: 685\n\nHTTP/1.1 200 OK\nContent-Type: text/html\nSRV: 5\nAccess-Control-Allow-Origin: *\nX-UA-Compatible: IE=edge\nAccess-Control-Allow-Headers: Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers\nVary: Accept-Encoding\nContent-Encoding: gzip\nContent-Length: 32934\nDate: Sun, 15 Dec 2024 11:42:57 GMT\nConnection: keep-alive\nSet-Cookie: akamai_visit_id=47fcc317629777ebf24Z; expires=Tue, 15-Dec-2026 11:42:57 GMT; path=/; domain=.cdc.gov; secure\nStrict-Transport-Security: max-age=31536000 ; includeSubDomains ; preload\nSet-Cookie: Akamai-Request-ID=47fcc317629777ebf24Z; path=/; domain=cdc.gov\n\n\n\nWARC/1.0\nWARC-IP-Address: 104.102.97.35\nWARC-Type: request\nWARC-Record-ID: <urn:uuid:5ea31e9d-7e84-4f2c-9096-f878bf5b7038>\nWARC-Target-URI: https://www.cdc.gov/nchs/nvss/vsrr/drug-overdose-data.htm\nWARC-Date: 2024-12-15T11:42:57Z\nWARC-Payload-Digest: sha1:3I42H3S6NNFQ2MSVX7XZKYAYSCX5QBYJ\nWARC-Concurrent-To: <urn:uuid:708643dc-3475-4ebd-a61c-dcfe61e6751c>\nWARC-Block-Digest: sha1:F5WG2FZBA4I3RTF2DX3JUSFZ42ZUHBRO\nContent-Type: application/http; msgtype=request\nContent-Length: 179\n\nGET /nchs/nvss/vsrr/drug-overdose-data.htm HTTP/1.1\nHost: www.cdc.gov\nUser-Agent: python-requests/2.32.3\nAccept-Encoding: gzip, deflate\nAccept: */*\nConnection: keep-alive\n\n\n\nWARC/1.0\nWARC-IP-Address: 52.206.140.205\nWARC-Type: revisit\nWARC-Record-ID: <urn:uuid:e2274135-e2c7-4205-b4da-c57074231afd>\nWARC-Target-URI: https://data.cdc.gov/api/views/xkb8-kh2a/rows.json?accessType=DOWNLOAD\nWARC-Date: 2024-12-15T11:42:59Z\nWARC-Payload-Digest: sha1:YPD3LANG4LBQKJKMWIRC3WLH5YNLB46N\nWARC-Profile: file-content; filename=\"files/rows.json\"\nWARC-Block-Digest: sha1:GN5I32SLWYDZVOYVAQZNPRX4MMGKEUIM\nContent-Type: application/http; msgtype=response\nContent-Length: 738\n\nHTTP/1.1 200 OK\nServer: nginx\nDate: Sun, 15 Dec 2024 11:42:58 GMT\nContent-Type: application/json; charset=utf-8\nTransfer-Encoding: chunked\nConnection: keep-alive\nAccess-Control-Allow-Origin: *\nETag: \"Z29sZi4xMTQzN180XzE1NnNIMzBzcW9MbktUVDExSnAxelI4YV9XVkFPTQ---gziuHLx5Qq7GbTybeNi0lz4arzJm06--gzip--gzip\"\nX-SODA2-Data-Out-Of-Date: false\nX-SODA2-Truth-Last-Modified: Wed, 11 Dec 2024 14:33:58 GMT\nX-SODA2-Secondary-Last-Modified: Wed, 11 Dec 2024 14:33:58 GMT\nLast-Modified: Wed, 11 Dec 2024 14:33:58 GMT\nVary: Accept-Encoding\nContent-Encoding: gzip\nAge: 2\nX-Socrata-Region: aws-us-east-1-fedramp-prod\nStrict-Transport-Security: max-age=31536000; includeSubDomains\nX-Socrata-RequestId: e4e6cdc0beaf3ef00c66f301aa37a0b1\n\n\n\nWARC/1.0\nWARC-IP-Address: 52.206.140.205\nWARC-Type: request\nWARC-Record-ID: <urn:uuid:9493c373-6952-4eee-9e62-9204de5dba1c>\nWARC-Target-URI: https://data.cdc.gov/api/views/xkb8-kh2a/rows.json?accessType=DOWNLOAD\nWARC-Date: 2024-12-15T11:42:59Z\nWARC-Payload-Digest: sha1:3I42H3S6NNFQ2MSVX7XZKYAYSCX5QBYJ\nWARC-Concurrent-To: <urn:uuid:e2274135-e2c7-4205-b4da-c57074231afd>\nWARC-Block-Digest: sha1:SNQIUKVCZQ743RIDBY5LMRSA4VCK3XQO\nContent-Type: application/http; msgtype=request\nContent-Length: 192\n\nGET /api/views/xkb8-kh2a/rows.json?accessType=DOWNLOAD HTTP/1.1\nHost: data.cdc.gov\nUser-Agent: python-requests/2.32.3\nAccept-Encoding: gzip, deflate\nAccept: */*\nConnection: keep-alive\n\n\n\nWARC/1.0\nWARC-IP-Address: 3.33.161.206\nWARC-Type: revisit\nWARC-Record-ID: <urn:uuid:f9f37f3d-c38c-4ef6-b084-57d9a2c77cd6>\nWARC-Target-URI: https://healthdata.gov/data.json\nWARC-Date: 2024-12-15T11:43:02Z\nWARC-Payload-Digest: sha1:EP2BOXJBEUQ4XIWFCFS5DMESU2NPGW5F\nWARC-Profile: file-content; filename=\"files/data.json\"\nWARC-Block-Digest: sha1:NZE5ELHEB6U43BJAG56GLERFPNFVEFNT\nContent-Type: application/http; msgtype=response\nContent-Length: 422\n\nHTTP/1.1 200 OK\nServer: nginx\nDate: Sun, 15 Dec 2024 11:43:02 GMT\nContent-Type: application/json; charset=utf-8\nTransfer-Encoding: chunked\nConnection: keep-alive\nAccess-Control-Allow-Origin: *\nVary: Accept-Encoding\nContent-Encoding: gzip\nAge: 4\nX-Socrata-Region: aws-us-east-1-fedramp-prod\nStrict-Transport-Security: max-age=31536000; includeSubDomains\nX-Socrata-RequestId: ac26c76724cf33a2538d18cf67aa1149\n\n\n\nWARC/1.0\nWARC-IP-Address: 3.33.161.206\nWARC-Type: request\nWARC-Record-ID: <urn:uuid:499adbeb-510a-42ee-b975-0ee78b9598c4>\nWARC-Target-URI: https://healthdata.gov/data.json\nWARC-Date: 2024-12-15T11:43:02Z\nWARC-Payload-Digest: sha1:3I42H3S6NNFQ2MSVX7XZKYAYSCX5QBYJ\nWARC-Concurrent-To: <urn:uuid:f9f37f3d-c38c-4ef6-b084-57d9a2c77cd6>\nWARC-Block-Digest: sha1:JFXBVGQDC7AULOG5WV76NDWBJ6Y6IYTG\nContent-Type: application/http; msgtype=request\nContent-Length: 154\n\nGET /data.json HTTP/1.1\nHost: healthdata.gov\nUser-Agent: python-requests/2.32.3\nAccept-Encoding: gzip, deflate\nAccept: */*\nConnection: keep-alive\n\n\n\nWARC/1.0\nWARC-IP-Address: 52.206.68.26\nWARC-Type: revisit\nWARC-Record-ID: <urn:uuid:4427172e-7096-4162-9e54-3f52d3c5a4db>\nWARC-Target-URI: https://data.cdc.gov/api/views/xkb8-kh2a/rows.rdf?accessType=DOWNLOAD\nWARC-Date: 2024-12-15T11:43:03Z\nWARC-Payload-Digest: sha1:5V4LZB73PDGMZDP7VJLRGTEXSNIPUNIR\nWARC-Profile: file-content; filename=\"files/rows.rdf\"\nWARC-Block-Digest: sha1:L6PMDIFRQGVQFMSEAW3VQW242UVIJGQK\nContent-Type: application/http; msgtype=response\nContent-Length: 741\n\nHTTP/1.1 200 OK\nServer: nginx\nDate: Sun, 15 Dec 2024 11:43:03 GMT\nContent-Type: application/rdf+xml; charset=utf-8\nTransfer-Encoding: chunked\nConnection: keep-alive\nAccess-Control-Allow-Origin: *\nETag: \"Z29sZi4xMTQzN180XzE1NjR2cTZTeEtJaVBfcDBsZnM4eUVQb2Vfbjhadw---gzihu4KxuR1mNc-q-Fqf3G-Bqgd54h--gzip--gzip\"\nX-SODA2-Data-Out-Of-Date: false\nX-SODA2-Truth-Last-Modified: Wed, 11 Dec 2024 14:33:58 GMT\nX-SODA2-Secondary-Last-Modified: Wed, 11 Dec 2024 14:33:58 GMT\nLast-Modified: Wed, 11 Dec 2024 14:33:58 GMT\nVary: Accept-Encoding\nContent-Encoding: gzip\nAge: 2\nX-Socrata-Region: aws-us-east-1-fedramp-prod\nStrict-Transport-Security: max-age=31536000; includeSubDomains\nX-Socrata-RequestId: 379c1e5a333712512a44c6a65f1ced68\n\n\n\nWARC/1.0\nWARC-IP-Address: 52.206.68.26\nWARC-Type: request\nWARC-Record-ID: <urn:uuid:28b1d526-651f-4987-89d0-26fe588bb4f5>\nWARC-Target-URI: https://data.cdc.gov/api/views/xkb8-kh2a/rows.rdf?accessType=DOWNLOAD\nWARC-Date: 2024-12-15T11:43:03Z\nWARC-Payload-Digest: sha1:3I42H3S6NNFQ2MSVX7XZKYAYSCX5QBYJ\nWARC-Concurrent-To: <urn:uuid:4427172e-7096-4162-9e54-3f52d3c5a4db>\nWARC-Block-Digest: sha1:QNACWOGKIDM5TDBBDPVJSNMMFH7YBBGG\nContent-Type: application/http; msgtype=request\nContent-Length: 191\n\nGET /api/views/xkb8-kh2a/rows.rdf?accessType=DOWNLOAD HTTP/1.1\nHost: data.cdc.gov\nUser-Agent: python-requests/2.32.3\nAccept-Encoding: gzip, deflate\nAccept: */*\nConnection: keep-alive\n\n\n\nWARC/1.0\nWARC-IP-Address: 159.142.191.107\nWARC-Type: response\nWARC-Record-ID: <urn:uuid:6357c439-4452-4dbc-87b6-4bd40ed40426>\nWARC-Target-URI: https://project-open-data.cio.gov/v1.1/schema/catalog.jsonld\nWARC-Date: 2024-12-15T11:43:03Z\nWARC-Payload-Digest: sha1:C2C7GQID7APCPQS3U4AYIDSHPE7MG6AK\nWARC-Block-Digest: sha1:3DZ4NOKFJLJHQXOHAGOH6TACS3D6KRZO\nContent-Type: application/http; msgtype=response\nContent-Length: 669\n\nHTTP/1.1 301 Moved Permanently\nDate: Sun, 15 Dec 2024 11:43:03 GMT\nServer: Apache\nX-Frame-Options: SAMEORIGIN\nStrict-Transport-Security: max-age=31536000; includeSubdomains; preload\nLocation: https://resources.data.gov/schemas/dcat-us/v1.1/schema/catalog.jsonld\nContent-Length: 277\nKeep-Alive: timeout=5, max=100\nConnection: Keep-Alive\nContent-Type: text/html; charset=iso-8859-1\n\n<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n<html><head>\n<title>301 Moved Permanently</title>\n</head><body>\n<h1>Moved Permanently</h1>\n<p>The document has moved <a href=\"https://resources.data.gov/schemas/dcat-us/v1.1/schema/catalog.jsonld\">here</a>.</p>\n</body></html>\n\n\nWARC/1.0\nWARC-IP-Address: 159.142.191.107\nWARC-Type: request\nWARC-Record-ID: <urn:uuid:3a3394b9-f629-4912-8d9e-be1ad15c512a>\nWARC-Target-URI: https://project-open-data.cio.gov/v1.1/schema/catalog.jsonld\nWARC-Date: 2024-12-15T11:43:03Z\nWARC-Payload-Digest: sha1:3I42H3S6NNFQ2MSVX7XZKYAYSCX5QBYJ\nWARC-Concurrent-To: <urn:uuid:6357c439-4452-4dbc-87b6-4bd40ed40426>\nWARC-Block-Digest: sha1:GTDS7KMEJ3YOVR3BSXSOJVHNN3LSP5NH\nContent-Type: application/http; msgtype=request\nContent-Length: 182\n\nGET /v1.1/schema/catalog.jsonld HTTP/1.1\nHost: project-open-data.cio.gov\nUser-Agent: python-requests/2.32.3\nAccept-Encoding: gzip, deflate\nAccept: */*\nConnection: keep-alive\n\n\n\nWARC/1.0\nWARC-IP-Address: 18.161.21.107\nWARC-Type: revisit\nWARC-Record-ID: <urn:uuid:1dccf3c7-4d14-4017-8175-71d81a8340b2>\nWARC-Target-URI: https://resources.data.gov/schemas/dcat-us/v1.1/schema/catalog.jsonld\nWARC-Date: 2024-12-15T11:43:03Z\nWARC-Payload-Digest: sha1:5VCPU76NSH5RYQH4THWDVWUH54WZA2AS\nWARC-Profile: file-content; filename=\"files/catalog.jsonld\"\nWARC-Block-Digest: sha1:CMJV6ISVL2NXWNSG76GIC7EDBVXTGNDF\nContent-Type: application/http; msgtype=response\nContent-Length: 810\n\nHTTP/1.1 200 OK\nContent-Type: application/ld+json\nContent-Length: 1729\nConnection: keep-alive\nDate: Sun, 15 Dec 2024 11:42:08 GMT\nAccept-Ranges: bytes\nAccess-Control-Allow-Methods: GET, HEAD\nCache-Control: max-age=60\nLast-Modified: Mon, 10 Oct 2022 15:31:13 GMT\nStrict-Transport-Security: max-age=31536000; preload\nX-Amz-Server-Side-Encryption: AES256\nX-Content-Type-Options: nosniff\nX-Robots-Tag: all\nX-Server: Cloud.gov Pages\nX-Vcap-Request-Id: ad667e07-0658-4df2-4aa0-980f3f4ece7f\nX-Xss-Protection: 1; mode=block\nX-Frame-Options: SAMEORIGIN\nETag: \"b4e8fbb20c56de9ae26afe9062712474\"\nX-Cache: Hit from cloudfront\nVia: 1.1 6c748592897536a14218f656977fbc38.cloudfront.net (CloudFront)\nX-Amz-Cf-Pop: BOS50-P1\nX-Amz-Cf-Id: 5Jn3ux08-3GF9_t9gFe0PEZQ1A0hQtDBWIJK_odBZf21vCAp_32dkw==\nAge: 55\n\n\n\nWARC/1.0\nWARC-IP-Address: 18.161.21.107\nWARC-Type: request\nWARC-Record-ID: <urn:uuid:46c40b88-48b9-44d7-ab6d-1b1c9fae23b8>\nWARC-Target-URI: https://resources.data.gov/schemas/dcat-us/v1.1/schema/catalog.jsonld\nWARC-Date: 2024-12-15T11:43:03Z\nWARC-Payload-Digest: sha1:3I42H3S6NNFQ2MSVX7XZKYAYSCX5QBYJ\nWARC-Concurrent-To: <urn:uuid:1dccf3c7-4d14-4017-8175-71d81a8340b2>\nWARC-Block-Digest: sha1:QNT4L67X3EYSQRT6RLKOEIS2CJT3ES53\nContent-Type: application/http; msgtype=request\nContent-Length: 191\n\nGET /schemas/dcat-us/v1.1/schema/catalog.jsonld HTTP/1.1\nHost: resources.data.gov\nUser-Agent: python-requests/2.32.3\nAccept-Encoding: gzip, deflate\nAccept: */*\nConnection: keep-alive\n\n\n\nWARC/1.0\nWARC-IP-Address: 52.206.140.205\nWARC-Type: revisit\nWARC-Record-ID: <urn:uuid:5537cc02-de85-4d46-8eac-5013c69420dd>\nWARC-Target-URI: https://data.cdc.gov/api/views/xkb8-kh2a\nWARC-Date: 2024-12-15T11:43:03Z\nWARC-Payload-Digest: sha1:OM725OUXJX7SAXAQPK6CLRXOQAIBDJ2I\nWARC-Profile: file-content; filename=\"files/xkb8-kh2a.json\"\nWARC-Block-Digest: sha1:WTNDIKTTPP7MXPRC75NTT4PNYIEVJ4C5\nContent-Type: application/http; msgtype=response\nContent-Length: 422\n\nHTTP/1.1 200 OK\nServer: nginx\nDate: Sun, 15 Dec 2024 11:43:03 GMT\nContent-Type: application/json; charset=utf-8\nTransfer-Encoding: chunked\nConnection: keep-alive\nAccess-Control-Allow-Origin: *\nVary: Accept-Encoding\nContent-Encoding: gzip\nAge: 0\nX-Socrata-Region: aws-us-east-1-fedramp-prod\nStrict-Transport-Security: max-age=31536000; includeSubDomains\nX-Socrata-RequestId: a83891a2a2951d8274894ed41a15b5a5\n\n\n\nWARC/1.0\nWARC-IP-Address: 52.206.140.205\nWARC-Type: request\nWARC-Record-ID: <urn:uuid:3ef7d09b-070d-43f4-8acb-de3820b200c6>\nWARC-Target-URI: https://data.cdc.gov/api/views/xkb8-kh2a\nWARC-Date: 2024-12-15T11:43:03Z\nWARC-Payload-Digest: sha1:3I42H3S6NNFQ2MSVX7XZKYAYSCX5QBYJ\nWARC-Concurrent-To: <urn:uuid:5537cc02-de85-4d46-8eac-5013c69420dd>\nWARC-Block-Digest: sha1:S5JCEEUOTYMF7WAVJPLAVRB3X67HNTCH\nContent-Type: application/http; msgtype=request\nContent-Length: 162\n\nGET /api/views/xkb8-kh2a HTTP/1.1\nHost: data.cdc.gov\nUser-Agent: python-requests/2.32.3\nAccept-Encoding: gzip, deflate\nAccept: */*\nConnection: keep-alive\n\n\n\nWARC/1.0\nWARC-IP-Address: 13.249.190.31\nWARC-Type: revisit\nWARC-Record-ID: <urn:uuid:fc933aa2-7408-4fe1-b61d-37b559f3e611>\nWARC-Target-URI: https://www.usa.gov/government-works\nWARC-Date: 2024-12-15T11:43:03Z\nWARC-Payload-Digest: sha1:GTBDF553SWJLFLMB7D23J5RKB5ZHNNIW\nWARC-Profile: file-content; filename=\"files/government-works.html\"\nWARC-Block-Digest: sha1:I2EJNDWWYHGOEBXS7D5G3M2WV3U33A5M\nContent-Type: application/http; msgtype=response\nContent-Length: 735\n\nHTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: 521\nConnection: keep-alive\nDate: Sun, 15 Dec 2024 11:29:55 GMT\nAccept-Ranges: bytes\nCache-Control: max-age=900\nLast-Modified: Sat, 14 Dec 2024 00:04:17 GMT\nStrict-Transport-Security: max-age=63072000; includeSubdomains\nX-Content-Type-Options: nosniff\nX-Vcap-Request-Id: 6537394b-2210-48d2-6060-b3c6b0438c28\nX-Xss-Protection: 1; mode=block\nX-Frame-Options: DENY\nETag: \"18eb35a9a402aa5d7709c0b7fd90b0a4\"\nVary: Accept-Encoding,Accept-Encoding,Accept-Encoding\nX-Cache: Hit from cloudfront\nVia: 1.1 c855a9a9a914304d480b143fdc4b740e.cloudfront.net (CloudFront)\nX-Amz-Cf-Pop: BOS50-C2\nX-Amz-Cf-Id: fWu_NFycm_iziM0GdyP5Ex48LZRnXoB4mklbLs6JX_1W6JArUrf3Xw==\nAge: 788\n\n\n\nWARC/1.0\nWARC-IP-Address: 13.249.190.31\nWARC-Type: request\nWARC-Record-ID: <urn:uuid:8ca7165f-fef5-4364-8dc8-5ce88d44594e>\nWARC-Target-URI: https://www.usa.gov/government-works\nWARC-Date: 2024-12-15T11:43:03Z\nWARC-Payload-Digest: sha1:3I42H3S6NNFQ2MSVX7XZKYAYSCX5QBYJ\nWARC-Concurrent-To: <urn:uuid:fc933aa2-7408-4fe1-b61d-37b559f3e611>\nWARC-Block-Digest: sha1:7Q2JO3ITHPLXTRCNXA2ZEQAY5BPQITMP\nContent-Type: application/http; msgtype=request\nContent-Length: 158\n\nGET /government-works HTTP/1.1\nHost: www.usa.gov\nUser-Agent: python-requests/2.32.3\nAccept-Encoding: gzip, deflate\nAccept: */*\nConnection: keep-alive\n\n\n\nWARC/1.0\nWARC-IP-Address: 52.206.68.26\nWARC-Type: revisit\nWARC-Record-ID: <urn:uuid:5f588a53-da15-4274-aac4-d9b63f26c716>\nWARC-Target-URI: https://data.cdc.gov/api/views/xkb8-kh2a/rows.xml?accessType=DOWNLOAD\nWARC-Date: 2024-12-15T11:43:06Z\nWARC-Payload-Digest: sha1:HOPGWPU4D5IVPLXJTANEUBGF45NIJ53M\nWARC-Profile: file-content; filename=\"files/rows.xml\"\nWARC-Block-Digest: sha1:AN6UFKQW4TL7LGBQL363XC4WIDW6W2DM\nContent-Type: application/http; msgtype=response\nContent-Length: 729\n\nHTTP/1.1 200 OK\nServer: nginx\nDate: Sun, 15 Dec 2024 11:43:03 GMT\nContent-Type: text/xml;charset=utf-8\nTransfer-Encoding: chunked\nConnection: keep-alive\nAccess-Control-Allow-Origin: *\nETag: \"Z29sZi4xMTQzN180XzE1NnNIMzBzcW9MbktUVDExSnAxelI4YV9XVkFPTQ---gziuHLx5Qq7GbTybeNi0lz4arzJm06--gzip--gzip\"\nX-SODA2-Data-Out-Of-Date: false\nX-SODA2-Truth-Last-Modified: Wed, 11 Dec 2024 14:33:58 GMT\nX-SODA2-Secondary-Last-Modified: Wed, 11 Dec 2024 14:33:58 GMT\nLast-Modified: Wed, 11 Dec 2024 14:33:58 GMT\nVary: Accept-Encoding\nContent-Encoding: gzip\nAge: 0\nX-Socrata-Region: aws-us-east-1-fedramp-prod\nStrict-Transport-Security: max-age=31536000; includeSubDomains\nX-Socrata-RequestId: 0f9f240bd0ae2f8dbfd3ff760f3959df\n\n\n\nWARC/1.0\nWARC-IP-Address: 52.206.68.26\nWARC-Type: request\nWARC-Record-ID: <urn:uuid:63f4877b-ca5f-4280-844f-814eedc542f8>\nWARC-Target-URI: https://data.cdc.gov/api/views/xkb8-kh2a/rows.xml?accessType=DOWNLOAD\nWARC-Date: 2024-12-15T11:43:06Z\nWARC-Payload-Digest: sha1:3I42H3S6NNFQ2MSVX7XZKYAYSCX5QBYJ\nWARC-Concurrent-To: <urn:uuid:5f588a53-da15-4274-aac4-d9b63f26c716>\nWARC-Block-Digest: sha1:7PDDPQBONO4BTV4J3VFKPT7RZ2WFCZA5\nContent-Type: application/http; msgtype=request\nContent-Length: 191\n\nGET /api/views/xkb8-kh2a/rows.xml?accessType=DOWNLOAD HTTP/1.1\nHost: data.cdc.gov\nUser-Agent: python-requests/2.32.3\nAccept-Encoding: gzip, deflate\nAccept: */*\nConnection: keep-alive\n\n\n\nWARC/1.0\nWARC-IP-Address: 159.142.191.107\nWARC-Type: response\nWARC-Record-ID: <urn:uuid:65583a72-966a-4cdb-83ae-3988a71155c9>\nWARC-Target-URI: https://project-open-data.cio.gov/v1.1/schema\nWARC-Date: 2024-12-15T11:43:06Z\nWARC-Payload-Digest: sha1:FKO5LCAMKE75HI6U6CWVDVT2SKM3ZMIL\nWARC-Block-Digest: sha1:J3WVFQ6BPRFUNS3GRTS7EPI4CKVX2X6W\nContent-Type: application/http; msgtype=response\nContent-Length: 621\n\nHTTP/1.1 301 Moved Permanently\nDate: Sun, 15 Dec 2024 11:43:06 GMT\nServer: Apache\nX-Frame-Options: SAMEORIGIN\nStrict-Transport-Security: max-age=31536000; includeSubdomains; preload\nLocation: https://resources.data.gov/resources/dcat-us/\nContent-Length: 253\nKeep-Alive: timeout=5, max=100\nConnection: Keep-Alive\nContent-Type: text/html; charset=iso-8859-1\n\n<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n<html><head>\n<title>301 Moved Permanently</title>\n</head><body>\n<h1>Moved Permanently</h1>\n<p>The document has moved <a href=\"https://resources.data.gov/resources/dcat-us/\">here</a>.</p>\n</body></html>\n\n\nWARC/1.0\nWARC-IP-Address: 159.142.191.107\nWARC-Type: request\nWARC-Record-ID: <urn:uuid:a80d73a1-20ed-4b6d-98da-c6da19fa2c0f>\nWARC-Target-URI: https://project-open-data.cio.gov/v1.1/schema\nWARC-Date: 2024-12-15T11:43:06Z\nWARC-Payload-Digest: sha1:3I42H3S6NNFQ2MSVX7XZKYAYSCX5QBYJ\nWARC-Concurrent-To: <urn:uuid:65583a72-966a-4cdb-83ae-3988a71155c9>\nWARC-Block-Digest: sha1:DOENBBYPTXAMG7SHSRNBGKHVMBK3VDHI\nContent-Type: application/http; msgtype=request\nContent-Length: 167\n\nGET /v1.1/schema HTTP/1.1\nHost: project-open-data.cio.gov\nUser-Agent: python-requests/2.32.3\nAccept-Encoding: gzip, deflate\nAccept: */*\nConnection: keep-alive\n\n\n\nWARC/1.0\nWARC-IP-Address: 18.161.21.80\nWARC-Type: revisit\nWARC-Record-ID: <urn:uuid:312c194b-6495-4e13-bddd-c938a0e327c6>\nWARC-Target-URI: https://resources.data.gov/resources/dcat-us/\nWARC-Date: 2024-12-15T11:43:06Z\nWARC-Payload-Digest: sha1:OXUJ3NZBE2FPMWEBMDN7VHRI3PGMEZF5\nWARC-Profile: file-content; filename=\"files/dcat-us.html\"\nWARC-Block-Digest: sha1:LDN4Y23YOCVDE6G7YMAOSWCYGAGKQIZX\nContent-Type: application/http; msgtype=response\nContent-Length: 863\n\nHTTP/1.1 200 OK\nContent-Type: text/html; charset=utf-8\nContent-Length: 20692\nConnection: keep-alive\nDate: Sun, 15 Dec 2024 11:42:07 GMT\nAccept-Ranges: bytes\nAccess-Control-Allow-Methods: GET, HEAD\nCache-Control: max-age=60\nContent-Encoding: gzip\nLast-Modified: Wed, 11 Dec 2024 22:00:58 GMT\nStrict-Transport-Security: max-age=31536000; preload\nX-Amz-Server-Side-Encryption: AES256\nX-Content-Type-Options: nosniff\nX-Robots-Tag: all\nX-Server: Cloud.gov Pages\nX-Vcap-Request-Id: 4c07bab3-e992-4ae9-6524-e38cb1e4ab5c\nX-Xss-Protection: 1; mode=block\nX-Frame-Options: SAMEORIGIN\nETag: \"b5a7ad077769f1afccdb098a41d88722\"\nVary: Accept-Encoding\nX-Cache: Hit from cloudfront\nVia: 1.1 27d6451eef68b8beda74f9749214fe2c.cloudfront.net (CloudFront)\nX-Amz-Cf-Pop: BOS50-P1\nX-Amz-Cf-Id: uJDan5tnfLKZ8P_3NZhN6zmJSFHkM1_jWD8KlrBVck-YhvS_EMCqTQ==\nAge: 59\n\n\n\nWARC/1.0\nWARC-IP-Address: 18.161.21.80\nWARC-Type: request\nWARC-Record-ID: <urn:uuid:ce2d5553-3d7b-4c37-b536-87f412d01499>\nWARC-Target-URI: https://resources.data.gov/resources/dcat-us/\nWARC-Date: 2024-12-15T11:43:06Z\nWARC-Payload-Digest: sha1:3I42H3S6NNFQ2MSVX7XZKYAYSCX5QBYJ\nWARC-Concurrent-To: <urn:uuid:312c194b-6495-4e13-bddd-c938a0e327c6>\nWARC-Block-Digest: sha1:DRKK7ASRBI24IOMP2EGBPBQ2CO6RYJWY\nContent-Type: application/http; msgtype=request\nContent-Length: 167\n\nGET /resources/dcat-us/ HTTP/1.1\nHost: resources.data.gov\nUser-Agent: python-requests/2.32.3\nAccept-Encoding: gzip, deflate\nAccept: */*\nConnection: keep-alive\n\n\n\nWARC/1.0\nWARC-IP-Address: 23.9.238.85\nWARC-Type: response\nWARC-Record-ID: <urn:uuid:9f666258-28c1-42cd-bf09-f135d9c651c4>\nWARC-Target-URI: https://www.hhs.gov/sites/default/files/web/images/seal_blue_gold_hi_res.jpg\nWARC-Date: 2024-12-15T11:43:06Z\nWARC-Payload-Digest: sha1:CLJUW7RY5J4XVRVWDBLOXDK3YWBTN6FO\nWARC-Block-Digest: sha1:UTPEOO6G26NFKZOWSM7N2BOG6N4QAK2O\nContent-Type: application/http; msgtype=response\nContent-Length: 853\n\nHTTP/1.1 403 Forbidden\nMime-Version: 1.0\nContent-Type: text/html\nContent-Length: 457\nCache-Control: max-age=2592000\nDate: Sun, 15 Dec 2024 11:43:06 GMT\nConnection: close\nServer-Timing: cdn-cache; desc=HIT\nServer-Timing: edge; dur=1\nStrict-Transport-Security: max-age=31536000;includeSubDomains;preload\nServer-Timing: ak_p; desc=\"1734262986949_398720116_10376234_23_7799_1_3_-\";dur=1\n\n<HTML><HEAD>\n<TITLE>Access Denied</TITLE>\n</HEAD><BODY>\n<H1>Access Denied</H1>\n \nYou don't have permission to access \"http&#58;&#47;&#47;www&#46;hhs&#46;gov&#47;sites&#47;default&#47;files&#47;web&#47;images&#47;seal&#95;blue&#95;gold&#95;hi&#95;res&#46;jpg\" on this server.<P>\nReference&#32;&#35;18&#46;74fcc317&#46;1734262986&#46;9e542a\n<P>https&#58;&#47;&#47;errors&#46;edgesuite&#46;net&#47;18&#46;74fcc317&#46;1734262986&#46;9e542a</P>\n</BODY>\n</HTML>\n\n\nWARC/1.0\nWARC-IP-Address: 23.9.238.85\nWARC-Type: request\nWARC-Record-ID: <urn:uuid:e1eb7fae-c3ff-49dd-a4be-73d24a4022f4>\nWARC-Target-URI: https://www.hhs.gov/sites/default/files/web/images/seal_blue_gold_hi_res.jpg\nWARC-Date: 2024-12-15T11:43:06Z\nWARC-Payload-Digest: sha1:3I42H3S6NNFQ2MSVX7XZKYAYSCX5QBYJ\nWARC-Concurrent-To: <urn:uuid:9f666258-28c1-42cd-bf09-f135d9c651c4>\nWARC-Block-Digest: sha1:NPWCXD4OQKYER3BORSP3GMA6XSDLWZ5B\nContent-Type: application/http; msgtype=request\nContent-Length: 198\n\nGET /sites/default/files/web/images/seal_blue_gold_hi_res.jpg HTTP/1.1\nHost: www.hhs.gov\nUser-Agent: python-requests/2.32.3\nAccept-Encoding: gzip, deflate\nAccept: */*\nConnection: keep-alive\n\n\n\nWARC/1.0\nWARC-IP-Address: 52.206.140.205\nWARC-Type: revisit\nWARC-Record-ID: <urn:uuid:b0997328-8652-4987-9ec1-2556794b442e>\nWARC-Target-URI: https://data.cdc.gov/api/views/xkb8-kh2a/rows.csv?accessType=DOWNLOAD\nWARC-Date: 2024-12-15T11:43:14Z\nWARC-Payload-Digest: sha1:XHPEAPYZUWTKE44JX3MNZQFJM4HGU6EO\nWARC-Profile: file-content; filename=\"files/rows.csv\"\nWARC-Block-Digest: sha1:EWLFSHTTZJ6BPVRXHRPX4AQKO2SZO3JW\nContent-Type: application/http; msgtype=response\nContent-Length: 876\n\nHTTP/1.1 200 OK\nServer: nginx\nDate: Sun, 15 Dec 2024 11:43:07 GMT\nContent-Type: text/csv; charset=utf-8\nTransfer-Encoding: chunked\nConnection: keep-alive\nAccess-Control-Allow-Origin: *\nContent-disposition: attachment; filename=VSRR_Provisional_Drug_Overdose_Death_Counts.csv\nCache-Control: public, must-revalidate, max-age=21600\nETag: \"Z29sZi4xMTQzN180XzE1NnNIMzBzcW9MbktUVDExSnAxelI4YV9XVkFPTQ---gziuHLx5Qq7GbTybeNi0lz4arzJm06--gzip--gzip\"\nX-SODA2-Data-Out-Of-Date: false\nX-SODA2-Truth-Last-Modified: Wed, 11 Dec 2024 14:33:58 GMT\nX-SODA2-Secondary-Last-Modified: Wed, 11 Dec 2024 14:33:58 GMT\nLast-Modified: Wed, 11 Dec 2024 14:33:58 GMT\nVary: Accept-Encoding\nContent-Encoding: gzip\nAge: 0\nX-Socrata-Region: aws-us-east-1-fedramp-prod\nStrict-Transport-Security: max-age=31536000; includeSubDomains\nX-Socrata-RequestId: 81ad91206a8403218122e5907f68f703\n\n\n\nWARC/1.0\nWARC-IP-Address: 52.206.140.205\nWARC-Type: request\nWARC-Record-ID: <urn:uuid:7226df0e-1ea6-4184-8931-0a0c01eaf1b9>\nWARC-Target-URI: https://data.cdc.gov/api/views/xkb8-kh2a/rows.csv?accessType=DOWNLOAD\nWARC-Date: 2024-12-15T11:43:14Z\nWARC-Payload-Digest: sha1:3I42H3S6NNFQ2MSVX7XZKYAYSCX5QBYJ\nWARC-Concurrent-To: <urn:uuid:b0997328-8652-4987-9ec1-2556794b442e>\nWARC-Block-Digest: sha1:FPLZVUOXMN2UUQFIFURPLK3GSULWMH5U\nContent-Type: application/http; msgtype=request\nContent-Length: 191\n\nGET /api/views/xkb8-kh2a/rows.csv?accessType=DOWNLOAD HTTP/1.1\nHost: data.cdc.gov\nUser-Agent: python-requests/2.32.3\nAccept-Encoding: gzip, deflate\nAccept: */*\nConnection: keep-alive\n\n\n\nWARC/1.0\nWARC-IP-Address: 159.142.191.107\nWARC-Type: response\nWARC-Record-ID: <urn:uuid:ab81a8c1-5e52-49fb-92fc-89152681bec7>\nWARC-Target-URI: https://project-open-data.cio.gov/v1.1/schema/catalog.json\nWARC-Date: 2024-12-15T11:43:14Z\nWARC-Payload-Digest: sha1:VWYZUVMAA2ZP7PLTHA573OFLN25SBIUC\nWARC-Block-Digest: sha1:H3AFMC4XMMQV6P42JTOKHYQ7YHMPGMMD\nContent-Type: application/http; msgtype=response\nContent-Length: 665\n\nHTTP/1.1 301 Moved Permanently\nDate: Sun, 15 Dec 2024 11:43:14 GMT\nServer: Apache\nX-Frame-Options: SAMEORIGIN\nStrict-Transport-Security: max-age=31536000; includeSubdomains; preload\nLocation: https://resources.data.gov/schemas/dcat-us/v1.1/schema/catalog.json\nContent-Length: 275\nKeep-Alive: timeout=5, max=100\nConnection: Keep-Alive\nContent-Type: text/html; charset=iso-8859-1\n\n<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n<html><head>\n<title>301 Moved Permanently</title>\n</head><body>\n<h1>Moved Permanently</h1>\n<p>The document has moved <a href=\"https://resources.data.gov/schemas/dcat-us/v1.1/schema/catalog.json\">here</a>.</p>\n</body></html>\n\n\nWARC/1.0\nWARC-IP-Address: 159.142.191.107\nWARC-Type: request\nWARC-Record-ID: <urn:uuid:9126abc7-4d91-4235-84e0-1b33f82e22ca>\nWARC-Target-URI: https://project-open-data.cio.gov/v1.1/schema/catalog.json\nWARC-Date: 2024-12-15T11:43:14Z\nWARC-Payload-Digest: sha1:3I42H3S6NNFQ2MSVX7XZKYAYSCX5QBYJ\nWARC-Concurrent-To: <urn:uuid:ab81a8c1-5e52-49fb-92fc-89152681bec7>\nWARC-Block-Digest: sha1:ZH5RUHPUJ4TISR53UZZQSEAJYAHP4EOL\nContent-Type: application/http; msgtype=request\nContent-Length: 180\n\nGET /v1.1/schema/catalog.json HTTP/1.1\nHost: project-open-data.cio.gov\nUser-Agent: python-requests/2.32.3\nAccept-Encoding: gzip, deflate\nAccept: */*\nConnection: keep-alive\n\n\n\nWARC/1.0\nWARC-IP-Address: 18.161.21.128\nWARC-Type: revisit\nWARC-Record-ID: <urn:uuid:533c9580-c36f-47f0-9ffe-a246273e7570>\nWARC-Target-URI: https://resources.data.gov/schemas/dcat-us/v1.1/schema/catalog.json\nWARC-Date: 2024-12-15T11:43:14Z\nWARC-Payload-Digest: sha1:5VPO4VWTHK5P3DF7JHXDMD65JW224K37\nWARC-Profile: file-content; filename=\"files/catalog.json\"\nWARC-Block-Digest: sha1:M5GD3WHAFQNDUBNXOSWKEW2D4GYIXUZI\nContent-Type: application/http; msgtype=response\nContent-Length: 853\n\nHTTP/1.1 200 OK\nContent-Type: application/json\nContent-Length: 603\nConnection: keep-alive\nDate: Sun, 15 Dec 2024 11:42:31 GMT\nAccept-Ranges: bytes\nAccess-Control-Allow-Methods: GET, HEAD\nCache-Control: max-age=60\nContent-Encoding: gzip\nLast-Modified: Mon, 10 Oct 2022 15:31:12 GMT\nStrict-Transport-Security: max-age=31536000; preload\nX-Amz-Server-Side-Encryption: AES256\nX-Content-Type-Options: nosniff\nX-Robots-Tag: all\nX-Server: Cloud.gov Pages\nX-Vcap-Request-Id: 7a4c0940-03f3-4152-51e7-8d2438a04c83\nX-Xss-Protection: 1; mode=block\nX-Frame-Options: SAMEORIGIN\nETag: \"e0f8130f09c3c7620fd256f847c2c450\"\nVary: Accept-Encoding\nX-Cache: Hit from cloudfront\nVia: 1.1 f237197fd08ad2a2371cf58fb6ca3072.cloudfront.net (CloudFront)\nX-Amz-Cf-Pop: BOS50-P1\nX-Amz-Cf-Id: UHbC8bVjP4Mg1Qq0E0c1xq9dgwW4hgYlcZduthPW04Aaua14I7zsGg==\nAge: 42\n\n\n\nWARC/1.0\nWARC-IP-Address: 18.161.21.128\nWARC-Type: request\nWARC-Record-ID: <urn:uuid:0c26114c-8419-44e4-997c-b8f014a2ec2e>\nWARC-Target-URI: https://resources.data.gov/schemas/dcat-us/v1.1/schema/catalog.json\nWARC-Date: 2024-12-15T11:43:14Z\nWARC-Payload-Digest: sha1:3I42H3S6NNFQ2MSVX7XZKYAYSCX5QBYJ\nWARC-Concurrent-To: <urn:uuid:533c9580-c36f-47f0-9ffe-a246273e7570>\nWARC-Block-Digest: sha1:77QBDWZPWRLAQKLR5Y4RTSMV37SVPENT\nContent-Type: application/http; msgtype=request\nContent-Length: 189\n\nGET /schemas/dcat-us/v1.1/schema/catalog.json HTTP/1.1\nHost: resources.data.gov\nUser-Agent: python-requests/2.32.3\nAccept-Encoding: gzip, deflate\nAccept: */*\nConnection: keep-alive\n\n\n\nProducts - Vital Statistics Rapid Release - Provisional Drug Overdose Data\nSkip directly to site content\nSkip directly to search\nEspa\u00f1ol\n|\n{\n  \"source\": \"datagov\",\n  \"title\": \"vsrr-provisional-drug-overdose-death-counts\",\n  \"processed_at\": \"2025-12-19T14:15:10.902971\",\n  \"pipeline_version\": \"1.0.0\",\n  \"original_key\": \"harvard-lil/gov-data/collections/data_gov/vsrr-provisional-drug-overdose-death-counts/v1.zip\",\n  \"file_count\": 13\n}",
+        "returncode": 0,
+        "timestamp": 1794587908.348816,
+        "exception_info": ""
+      }
+    },
+    {
+      "content": "THOUGHT: The previous output was dominated by archived web metadata rather than the dataset schema. I\u2019ll inspect the archived data-file boundaries and the captured Socrata rows to identify the usable data and fields.\n\n```mswea_bash_command\ngrep -n -E 'filename=|State|Year|Period|Data Value|Number of Deaths|drug-overdose-data' datagov/vsrr-provisional-drug-overdose-death-counts/files/drug-overdose-data.txt | head -25; grep -n -E 'filename=|\\\"columns\\\"|\\\"data\\\"|\\\"state\\\"|\\\"year\\\"|\\\"deaths\\\"' datagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt | head -20\n```",
+      "role": "assistant",
+      "tool_calls": null,
+      "function_call": null,
+      "provider_specific_fields": {
+        "refusal": null
+      },
+      "annotations": [],
+      "extra": {
+        "actions": [
+          {
+            "command": "grep -n -E 'filename=|State|Year|Period|Data Value|Number of Deaths|drug-overdose-data' datagov/vsrr-provisional-drug-overdose-death-counts/files/drug-overdose-data.txt | head -25; grep -n -E 'filename=|\\\"columns\\\"|\\\"data\\\"|\\\"state\\\"|\\\"year\\\"|\\\"deaths\\\"' datagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt | head -20"
+          }
+        ],
+        "response": {
+          "id": "chatcmpl-EjoaHMZ3g91tTVF1xE2QcbTAicOjI",
+          "created": 1794587913,
+          "model": "gpt-6-luna-2026-09-22",
+          "object": "chat.completion",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "message": {
+                "content": "THOUGHT: The previous output was dominated by archived web metadata rather than the dataset schema. I\u2019ll inspect the archived data-file boundaries and the captured Socrata rows to identify the usable data and fields.\n\n```mswea_bash_command\ngrep -n -E 'filename=|State|Year|Period|Data Value|Number of Deaths|drug-overdose-data' datagov/vsrr-provisional-drug-overdose-death-counts/files/drug-overdose-data.txt | head -25; grep -n -E 'filename=|\\\"columns\\\"|\\\"data\\\"|\\\"state\\\"|\\\"year\\\"|\\\"deaths\\\"' datagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt | head -20\n```",
+                "role": "assistant",
+                "tool_calls": null,
+                "function_call": null,
+                "provider_specific_fields": {
+                  "refusal": null
+                },
+                "annotations": []
+              },
+              "provider_specific_fields": {
+                "content_filter_results": {
+                  "hate": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "protected_material_code": {
+                    "detected": false,
+                    "filtered": false
+                  },
+                  "protected_material_text": {
+                    "detected": false,
+                    "filtered": false
+                  },
+                  "self_harm": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "sexual": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "violence": {
+                    "filtered": false,
+                    "severity": "safe"
+                  }
+                }
+              }
+            }
+          ],
+          "usage": {
+            "completion_tokens": 295,
+            "prompt_tokens": 3694,
+            "total_tokens": 3989,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": 0,
+              "audio_tokens": 0,
+              "reasoning_tokens": 117,
+              "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 2581,
+              "cached_tokens": 1110,
+              "cache_creation_tokens": 2581
+            },
+            "latency_checkpoint": {
+              "engine_tbt_ms": 13,
+              "engine_ttft_ms": 145,
+              "engine_ttlt_ms": 4033,
+              "pre_inference_ms": 66,
+              "service_tbt_ms": 13,
+              "service_ttft_ms": 283,
+              "service_ttlt_ms": 4166,
+              "user_visible_ttft_ms": 218
+            }
+          },
+          "moderation": null,
+          "service_tier": "default",
+          "prompt_filter_results": [
+            {
+              "prompt_index": 0,
+              "content_filter_results": {
+                "hate": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "jailbreak": {
+                  "detected": false,
+                  "filtered": false
+                },
+                "self_harm": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "sexual": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "violence": {
+                  "filtered": false,
+                  "severity": "safe"
+                }
+              }
+            }
+          ],
+          "routing": {
+            "serving_pipereplica": "d20261112164451-254e0661-prefill-r8-dp0-prefill"
+          }
+        },
+        "cost": 0.000481525,
+        "timestamp": 1794587917.529053
+      }
+    },
+    {
+      "role": "user",
+      "content": "<returncode>0</returncode>\n<output>\n7:An official website of the United States government\n10:A .gov website belongs to an official government organization in the United States.\n33:UPDATE 8/14/2024: The Monthly Provisional Drug Overdose Death Counts report provides estimates for the United States and jurisdictions within 4 months after the date of death. Some states currently have longer than usual delays in reporting drug overdose deaths. Recent trends may underestimate the death count in affected states and this potential impact should be considered when comparing results for states to previous months. Adjustments to account for typical reporting delays in the predicted counts may not fully account for these longer delays.\u00a0 Please see the\n64:This visualization presents a map of the United States, with each state filled with a color representing the percent increase or decrease in drug overdose deaths over the previous 12 months. There are 10 color categories, with deepest blue representing a decrease in percentage and deepest red indicating an increase. The states of Alaska and Hawaii are represented in the bottom left corner, while District of Columbia and New York City are expanded and displayed off the East Coast of the U.S.\n68:Percent Change for United States\n113:The reporting lag was shorted from 6 months to 4 months after years of monitoring the improving timeliness of death reporting and a recent comparison of predicted estimates calculated using the 4-month and 6-month lags. Estimates produced with the 6-month and 4-month lags had a difference of less than 0.2% for national predicted drug overdose death counts. State predicted drug overdose death counts differed by an average of 0.1% (ranging from 0.0 to 0.5%). National predicted counts for deaths involving opioids had a difference of 0.1%, while state predicted counts had an average difference of 0.3% (ranging from 0.3 to 2.9%).\n149:). Selected jurisdictions consistently had 90% or more of drug overdose death certificates mentioning at least one specific drug for all of the 12-month ending periods included in the dashboard. Provisional counts of drug overdose deaths where a specific drug or drug class is reported on the death certificate are presented for the United States and for jurisdictions meeting this threshold. Additionally, as a data quality metric, the percentage of drug overdose death records where at least one drug or drug class is recorded is presented.\n187:) and CDC WONDER are typically tabulated by state of residence and limited to residents of the United States. Provisional data, such as the Drug Overdose Death Counts released through the Vital Statistics Rapid Release (VSRR) program, include all deaths that occurred within the 50 states and the District of Columbia, including foreign residents. As such, provisional counts include approximately 400-500 additional drug overdose death records where the decedents were not US residents. Provisional data are tabulated by state of occurrence to capture the burden on the place where the deaths occur, and to correspond to the various data quality metrics that are provided.\n199:Rudd RA, Seth P, David F, Scholl L. Increases in Drug and Opioid-Involved Overdose Deaths\u2014United States, 2010\u20132015. MMWR Morb Mortal Wkly Rep 65(5051):1445\u201352. 2016.\n201:Warner M, Paulozzi LJ, Nolte KB, Davis GG, Nelson LS. State variation in certifying manner of death and drugs involved in drug intoxication deaths. Acad Forensic Pathol 3(2)231\u20137. 2013.\n202:Spencer MR, Mini\u00f1o AM, Warner M. Drug overdose deaths in the United States, 2001\u20132021. NCHS Data Brief, no 457. Hyattsville, MD: National Center for Health Statistics. 2022. DOI:\n</output>",
+      "extra": {
+        "raw_output": "7:An official website of the United States government\n10:A .gov website belongs to an official government organization in the United States.\n33:UPDATE 8/14/2024: The Monthly Provisional Drug Overdose Death Counts report provides estimates for the United States and jurisdictions within 4 months after the date of death. Some states currently have longer than usual delays in reporting drug overdose deaths. Recent trends may underestimate the death count in affected states and this potential impact should be considered when comparing results for states to previous months. Adjustments to account for typical reporting delays in the predicted counts may not fully account for these longer delays.\u00a0 Please see the\n64:This visualization presents a map of the United States, with each state filled with a color representing the percent increase or decrease in drug overdose deaths over the previous 12 months. There are 10 color categories, with deepest blue representing a decrease in percentage and deepest red indicating an increase. The states of Alaska and Hawaii are represented in the bottom left corner, while District of Columbia and New York City are expanded and displayed off the East Coast of the U.S.\n68:Percent Change for United States\n113:The reporting lag was shorted from 6 months to 4 months after years of monitoring the improving timeliness of death reporting and a recent comparison of predicted estimates calculated using the 4-month and 6-month lags. Estimates produced with the 6-month and 4-month lags had a difference of less than 0.2% for national predicted drug overdose death counts. State predicted drug overdose death counts differed by an average of 0.1% (ranging from 0.0 to 0.5%). National predicted counts for deaths involving opioids had a difference of 0.1%, while state predicted counts had an average difference of 0.3% (ranging from 0.3 to 2.9%).\n149:). Selected jurisdictions consistently had 90% or more of drug overdose death certificates mentioning at least one specific drug for all of the 12-month ending periods included in the dashboard. Provisional counts of drug overdose deaths where a specific drug or drug class is reported on the death certificate are presented for the United States and for jurisdictions meeting this threshold. Additionally, as a data quality metric, the percentage of drug overdose death records where at least one drug or drug class is recorded is presented.\n187:) and CDC WONDER are typically tabulated by state of residence and limited to residents of the United States. Provisional data, such as the Drug Overdose Death Counts released through the Vital Statistics Rapid Release (VSRR) program, include all deaths that occurred within the 50 states and the District of Columbia, including foreign residents. As such, provisional counts include approximately 400-500 additional drug overdose death records where the decedents were not US residents. Provisional data are tabulated by state of occurrence to capture the burden on the place where the deaths occur, and to correspond to the various data quality metrics that are provided.\n199:Rudd RA, Seth P, David F, Scholl L. Increases in Drug and Opioid-Involved Overdose Deaths\u2014United States, 2010\u20132015. MMWR Morb Mortal Wkly Rep 65(5051):1445\u201352. 2016.\n201:Warner M, Paulozzi LJ, Nolte KB, Davis GG, Nelson LS. State variation in certifying manner of death and drugs involved in drug intoxication deaths. Acad Forensic Pathol 3(2)231\u20137. 2013.\n202:Spencer MR, Mini\u00f1o AM, Warner M. Drug overdose deaths in the United States, 2001\u20132021. NCHS Data Brief, no 457. Hyattsville, MD: National Center for Health Statistics. 2022. DOI:\n",
+        "returncode": 0,
+        "timestamp": 1794587917.9179468,
+        "exception_info": ""
+      }
+    },
+    {
+      "content": "THOUGHT: The webpage explains that this dataset is provisional and tabulated by state of occurrence, but the matching archived row data has not yet revealed its schema. I\u2019ll inspect the captured data and row files by size and preview their beginnings to find the annual state-level counts.\n\n```mswea_bash_command\nwc -c datagov/vsrr-provisional-drug-overdose-death-counts/files/{data.txt,rows.txt,xkb8-kh2a.txt}; head -c 1200 datagov/vsrr-provisional-drug-overdose-death-counts/files/data.txt; printf '\\n--- rows ---\\n'; head -c 1200 datagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt; printf '\\n--- dataset link details ---\\n'; grep -n -E 'csv|xkb8-kh2a|rows.json|download' datagov/vsrr-provisional-drug-overdose-death-counts/files/data.txt | head\n```",
+      "role": "assistant",
+      "tool_calls": null,
+      "function_call": null,
+      "provider_specific_fields": {
+        "refusal": null
+      },
+      "annotations": [],
+      "extra": {
+        "actions": [
+          {
+            "command": "wc -c datagov/vsrr-provisional-drug-overdose-death-counts/files/{data.txt,rows.txt,xkb8-kh2a.txt}; head -c 1200 datagov/vsrr-provisional-drug-overdose-death-counts/files/data.txt; printf '\\n--- rows ---\\n'; head -c 1200 datagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt; printf '\\n--- dataset link details ---\\n'; grep -n -E 'csv|xkb8-kh2a|rows.json|download' datagov/vsrr-provisional-drug-overdose-death-counts/files/data.txt | head"
+          }
+        ],
+        "response": {
+          "id": "chatcmpl-EjoadO7vMEzOHGDWqki3d2fZfO2L6",
+          "created": 1794587935,
+          "model": "gpt-6-luna-2026-09-22",
+          "object": "chat.completion",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "message": {
+                "content": "THOUGHT: The webpage explains that this dataset is provisional and tabulated by state of occurrence, but the matching archived row data has not yet revealed its schema. I\u2019ll inspect the captured data and row files by size and preview their beginnings to find the annual state-level counts.\n\n```mswea_bash_command\nwc -c datagov/vsrr-provisional-drug-overdose-death-counts/files/{data.txt,rows.txt,xkb8-kh2a.txt}; head -c 1200 datagov/vsrr-provisional-drug-overdose-death-counts/files/data.txt; printf '\\n--- rows ---\\n'; head -c 1200 datagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt; printf '\\n--- dataset link details ---\\n'; grep -n -E 'csv|xkb8-kh2a|rows.json|download' datagov/vsrr-provisional-drug-overdose-death-counts/files/data.txt | head\n```",
+                "role": "assistant",
+                "tool_calls": null,
+                "function_call": null,
+                "provider_specific_fields": {
+                  "refusal": null
+                },
+                "annotations": []
+              },
+              "provider_specific_fields": {
+                "content_filter_results": {
+                  "hate": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "protected_material_code": {
+                    "detected": false,
+                    "filtered": false
+                  },
+                  "protected_material_text": {
+                    "detected": false,
+                    "filtered": false
+                  },
+                  "self_harm": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "sexual": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "violence": {
+                    "filtered": false,
+                    "severity": "safe"
+                  }
+                }
+              }
+            }
+          ],
+          "usage": {
+            "completion_tokens": 243,
+            "prompt_tokens": 4673,
+            "total_tokens": 4916,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": 0,
+              "audio_tokens": 0,
+              "reasoning_tokens": 18,
+              "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 979,
+              "cached_tokens": 3691,
+              "cache_creation_tokens": 979
+            },
+            "latency_checkpoint": {
+              "engine_tbt_ms": 9,
+              "engine_ttft_ms": 122,
+              "engine_ttlt_ms": 2376,
+              "pre_inference_ms": 94,
+              "service_tbt_ms": 9,
+              "service_ttft_ms": 319,
+              "service_ttlt_ms": 2567,
+              "user_visible_ttft_ms": 225
+            }
+          },
+          "moderation": null,
+          "service_tier": "default",
+          "prompt_filter_results": [
+            {
+              "prompt_index": 0,
+              "content_filter_results": {
+                "hate": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "jailbreak": {
+                  "detected": false,
+                  "filtered": false
+                },
+                "self_harm": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "sexual": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "violence": {
+                  "filtered": false,
+                  "severity": "safe"
+                }
+              }
+            }
+          ],
+          "routing": {
+            "serving_pipereplica": "d20261112164451-254e0661-prefill-r8-dp0-prefill"
+          }
+        },
+        "cost": 0.00028108500000000004,
+        "timestamp": 1794587938.138916
+      }
+    },
+    {
+      "role": "user",
+      "content": "<returncode>0</returncode>\n<output>\n 7956231 datagov/vsrr-provisional-drug-overdose-death-counts/files/data.txt\n12559035 datagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt\n   26782 datagov/vsrr-provisional-drug-overdose-death-counts/files/xkb8-kh2a.txt\n20542048 total\n{\n  \"@context\": \"https://project-open-data.cio.gov/v1.1/schema/catalog.jsonld\",\n  \"@id\": \"https://healthdata.gov/data.json\",\n  \"@type\": \"dcat:Catalog\",\n  \"conformsTo\": \"https://project-open-data.cio.gov/v1.1/schema\",\n  \"describedBy\": \"https://project-open-data.cio.gov/v1.1/schema/catalog.json\",\n  \"dataset\": [\n    {\n      \"accessLevel\": \"public\",\n      \"landingPage\": \"https://healthdata.gov/d/238m-ezg9\",\n      \"bureauCode\": [\n        \"009:00\"\n      ],\n      \"issued\": \"2021-10-14\",\n      \"@type\": \"dcat:Dataset\",\n      \"modified\": \"2021-10-13\",\n      \"keyword\": [\n        \"drug rebate program\"\n      ],\n      \"contactPoint\": {\n        \"@type\": \"vcard:Contact\",\n        \"fn\": \"Medicaid.gov\",\n        \"hasEmail\": \"mailto:Medicaid.gov@cms.hhs.gov\"\n      },\n      \"publisher\": {\n        \"@type\": \"org:Organization\",\n        \"name\": \"Centers for Medicare & Medicaid Services\"\n      },\n      \"identifier\": \"e28727b2-fe6b-46cb-8617-408de290200d\",\n      \"description\": \"The data below contains newly reported, active covered outpatient drugs which were reported by participating drug manufacturers since the last quarterly update of the Drug Products in the Medicaid Drug Rebate Program (MDRP) database.\",\n--- rows ---\nState,Year,Month,Period,Indicator,Data Value,Percent Complete,Percent Pending Investigation,State Name,Footnote,Footnote Symbol,Predicted Value\nAK,2015,April,12 month-ending,Percent with drugs specified,88.0952381,100,0,Alaska,Numbers may differ from published reports using final data. See Technical Notes.,**,\nAK,2015,April,12 month-ending,Cocaine (T40.5),,100,0,Alaska,Numbers may differ from published reports using final data. See Technical Notes.  Data not shown due to low data quality.,**,\nAK,2015,April,12 month-ending,\"Natural & semi-synthetic opioids, incl. methadone (T40.2, T40.3)\",,100,0,Alaska,Numbers may differ from published reports using final data. See Technical Notes.  Data not shown due to low data quality.,**,\nAK,2015,April,12 month-ending,\"Synthetic opioids, excl. methadone (T40.4)\",,100,0,Alaska,Numbers may differ from published reports using final data. See Technical Notes.  Data not shown due to low data quality.,**,\nAK,2015,April,12 month-ending,\"Opioids (T40.0-T40.4,T40.6)\",,100,0,Alaska,Numbers may differ from published reports using final data. See Technical Notes.  Data not shown due to low data quality.,**,\nAK,2015,April,12 month-ending,Psychostimulants wit\n--- dataset link details ---\n38:          \"downloadURL\": \"https://data.medicaid.gov/sites/default/files/uploaded_resources/mdrp-newly-rpt-drugs-aug-20210726-to-20210801.csv\",\n39:          \"mediaType\": \"text/csv\"\n82:          \"downloadURL\": \"https://data.cdc.gov/api/views/kyph-4i8d/rows.csv?accessType=DOWNLOAD\",\n83:          \"mediaType\": \"text/csv\"\n87:          \"downloadURL\": \"https://data.cdc.gov/api/views/kyph-4i8d/rows.rdf?accessType=DOWNLOAD\",\n92:          \"downloadURL\": \"https://data.cdc.gov/api/views/kyph-4i8d/rows.json?accessType=DOWNLOAD\",\n97:          \"downloadURL\": \"https://data.cdc.gov/api/views/kyph-4i8d/rows.xml?accessType=DOWNLOAD\",\n147:          \"downloadURL\": \"https://data.cdc.gov/api/views/n4v6-56e8/rows.csv?accessType=DOWNLOAD\",\n148:          \"mediaType\": \"text/csv\"\n152:          \"downloadURL\": \"https://data.cdc.gov/api/views/n4v6-56e8/rows.rdf?accessType=DOWNLOAD\",\n</output>",
+      "extra": {
+        "raw_output": " 7956231 datagov/vsrr-provisional-drug-overdose-death-counts/files/data.txt\n12559035 datagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt\n   26782 datagov/vsrr-provisional-drug-overdose-death-counts/files/xkb8-kh2a.txt\n20542048 total\n{\n  \"@context\": \"https://project-open-data.cio.gov/v1.1/schema/catalog.jsonld\",\n  \"@id\": \"https://healthdata.gov/data.json\",\n  \"@type\": \"dcat:Catalog\",\n  \"conformsTo\": \"https://project-open-data.cio.gov/v1.1/schema\",\n  \"describedBy\": \"https://project-open-data.cio.gov/v1.1/schema/catalog.json\",\n  \"dataset\": [\n    {\n      \"accessLevel\": \"public\",\n      \"landingPage\": \"https://healthdata.gov/d/238m-ezg9\",\n      \"bureauCode\": [\n        \"009:00\"\n      ],\n      \"issued\": \"2021-10-14\",\n      \"@type\": \"dcat:Dataset\",\n      \"modified\": \"2021-10-13\",\n      \"keyword\": [\n        \"drug rebate program\"\n      ],\n      \"contactPoint\": {\n        \"@type\": \"vcard:Contact\",\n        \"fn\": \"Medicaid.gov\",\n        \"hasEmail\": \"mailto:Medicaid.gov@cms.hhs.gov\"\n      },\n      \"publisher\": {\n        \"@type\": \"org:Organization\",\n        \"name\": \"Centers for Medicare & Medicaid Services\"\n      },\n      \"identifier\": \"e28727b2-fe6b-46cb-8617-408de290200d\",\n      \"description\": \"The data below contains newly reported, active covered outpatient drugs which were reported by participating drug manufacturers since the last quarterly update of the Drug Products in the Medicaid Drug Rebate Program (MDRP) database.\",\n--- rows ---\nState,Year,Month,Period,Indicator,Data Value,Percent Complete,Percent Pending Investigation,State Name,Footnote,Footnote Symbol,Predicted Value\nAK,2015,April,12 month-ending,Percent with drugs specified,88.0952381,100,0,Alaska,Numbers may differ from published reports using final data. See Technical Notes.,**,\nAK,2015,April,12 month-ending,Cocaine (T40.5),,100,0,Alaska,Numbers may differ from published reports using final data. See Technical Notes.  Data not shown due to low data quality.,**,\nAK,2015,April,12 month-ending,\"Natural & semi-synthetic opioids, incl. methadone (T40.2, T40.3)\",,100,0,Alaska,Numbers may differ from published reports using final data. See Technical Notes.  Data not shown due to low data quality.,**,\nAK,2015,April,12 month-ending,\"Synthetic opioids, excl. methadone (T40.4)\",,100,0,Alaska,Numbers may differ from published reports using final data. See Technical Notes.  Data not shown due to low data quality.,**,\nAK,2015,April,12 month-ending,\"Opioids (T40.0-T40.4,T40.6)\",,100,0,Alaska,Numbers may differ from published reports using final data. See Technical Notes.  Data not shown due to low data quality.,**,\nAK,2015,April,12 month-ending,Psychostimulants wit\n--- dataset link details ---\n38:          \"downloadURL\": \"https://data.medicaid.gov/sites/default/files/uploaded_resources/mdrp-newly-rpt-drugs-aug-20210726-to-20210801.csv\",\n39:          \"mediaType\": \"text/csv\"\n82:          \"downloadURL\": \"https://data.cdc.gov/api/views/kyph-4i8d/rows.csv?accessType=DOWNLOAD\",\n83:          \"mediaType\": \"text/csv\"\n87:          \"downloadURL\": \"https://data.cdc.gov/api/views/kyph-4i8d/rows.rdf?accessType=DOWNLOAD\",\n92:          \"downloadURL\": \"https://data.cdc.gov/api/views/kyph-4i8d/rows.json?accessType=DOWNLOAD\",\n97:          \"downloadURL\": \"https://data.cdc.gov/api/views/kyph-4i8d/rows.xml?accessType=DOWNLOAD\",\n147:          \"downloadURL\": \"https://data.cdc.gov/api/views/n4v6-56e8/rows.csv?accessType=DOWNLOAD\",\n148:          \"mediaType\": \"text/csv\"\n152:          \"downloadURL\": \"https://data.cdc.gov/api/views/n4v6-56e8/rows.rdf?accessType=DOWNLOAD\",\n",
+        "returncode": 0,
+        "timestamp": 1794587938.1833248,
+        "exception_info": ""
+      }
+    },
+    {
+      "content": "THOUGHT: The captured rows contain state, year, month, period, indicator, observed value, and predicted value. I\u2019ll inspect the available indicator names and national/state rows to determine the annual death-count measure and the correct year-end values.\n\n```mswea_bash_command\npython3 - <<'PY'\nimport pandas as pd\np='datagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt'\nd=pd.read_csv(p, low_memory=False)\nprint('rows',len(d),'years',d.Year.min(),d.Year.max())\nprint('indicators:',d.Indicator.dropna().unique().tolist())\nprint('states:',d.State.dropna().unique()[:8], '... count',d.State.nunique())\nprint(d[(d.Year.between(2015,2023)) & d.Indicator.astype(str).str.contains('death|overdose',case=False,na=False)].tail(12).to_string(index=False))\nPY\n```",
+      "role": "assistant",
+      "tool_calls": null,
+      "function_call": null,
+      "provider_specific_fields": {
+        "refusal": null
+      },
+      "annotations": [],
+      "extra": {
+        "actions": [
+          {
+            "command": "python3 - <<'PY'\nimport pandas as pd\np='datagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt'\nd=pd.read_csv(p, low_memory=False)\nprint('rows',len(d),'years',d.Year.min(),d.Year.max())\nprint('indicators:',d.Indicator.dropna().unique().tolist())\nprint('states:',d.State.dropna().unique()[:8], '... count',d.State.nunique())\nprint(d[(d.Year.between(2015,2023)) & d.Indicator.astype(str).str.contains('death|overdose',case=False,na=False)].tail(12).to_string(index=False))\nPY"
+          }
+        ],
+        "response": {
+          "id": "chatcmpl-Ejob50xpYnhfWU4QS3afRJYdagn5E",
+          "created": 1794587963,
+          "model": "gpt-6-luna-2026-09-22",
+          "object": "chat.completion",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "message": {
+                "content": "THOUGHT: The captured rows contain state, year, month, period, indicator, observed value, and predicted value. I\u2019ll inspect the available indicator names and national/state rows to determine the annual death-count measure and the correct year-end values.\n\n```mswea_bash_command\npython3 - <<'PY'\nimport pandas as pd\np='datagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt'\nd=pd.read_csv(p, low_memory=False)\nprint('rows',len(d),'years',d.Year.min(),d.Year.max())\nprint('indicators:',d.Indicator.dropna().unique().tolist())\nprint('states:',d.State.dropna().unique()[:8], '... count',d.State.nunique())\nprint(d[(d.Year.between(2015,2023)) & d.Indicator.astype(str).str.contains('death|overdose',case=False,na=False)].tail(12).to_string(index=False))\nPY\n```",
+                "role": "assistant",
+                "tool_calls": null,
+                "function_call": null,
+                "provider_specific_fields": {
+                  "refusal": null
+                },
+                "annotations": []
+              },
+              "provider_specific_fields": {
+                "content_filter_results": {
+                  "hate": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "protected_material_code": {
+                    "detected": false,
+                    "filtered": false
+                  },
+                  "protected_material_text": {
+                    "detected": false,
+                    "filtered": false
+                  },
+                  "self_harm": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "sexual": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "violence": {
+                    "filtered": false,
+                    "severity": "safe"
+                  }
+                }
+              }
+            }
+          ],
+          "usage": {
+            "completion_tokens": 320,
+            "prompt_tokens": 5948,
+            "total_tokens": 6268,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": 0,
+              "audio_tokens": 0,
+              "reasoning_tokens": 106,
+              "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 1275,
+              "cached_tokens": 4670,
+              "cache_creation_tokens": 1275
+            },
+            "latency_checkpoint": {
+              "engine_tbt_ms": 15,
+              "engine_ttft_ms": 132,
+              "engine_ttlt_ms": 4871,
+              "pre_inference_ms": 84,
+              "service_tbt_ms": 15,
+              "service_ttft_ms": 292,
+              "service_ttlt_ms": 5027,
+              "user_visible_ttft_ms": 209
+            }
+          },
+          "moderation": null,
+          "service_tier": "default",
+          "prompt_filter_results": [
+            {
+              "prompt_index": 0,
+              "content_filter_results": {
+                "hate": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "jailbreak": {
+                  "detected": false,
+                  "filtered": false
+                },
+                "self_harm": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "sexual": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "violence": {
+                  "filtered": false,
+                  "severity": "safe"
+                }
+              }
+            }
+          ],
+          "routing": {
+            "serving_pipereplica": "d20261112164451-254e0661-prefill-r8-dp0-prefill"
+          }
+        },
+        "cost": 0.00036637499999999995,
+        "timestamp": 1794587968.750891
+      }
+    },
+    {
+      "role": "user",
+      "content": "<returncode>0</returncode>\n<output>\nrows 69000 years 2015 2024\nindicators: ['Percent with drugs specified', 'Cocaine (T40.5)', 'Natural & semi-synthetic opioids, incl. methadone (T40.2, T40.3)', 'Synthetic opioids, excl. methadone (T40.4)', 'Opioids (T40.0-T40.4,T40.6)', 'Psychostimulants with abuse potential (T43.6)', 'Natural & semi-synthetic opioids (T40.2)', 'Methadone (T40.3)', 'Number of Deaths', 'Natural, semi-synthetic, & synthetic opioids, incl. methadone (T40.2-T40.4)', 'Heroin (T40.1)', 'Number of Drug Overdose Deaths']\nstates: <ArrowStringArray>\n['AK', 'AL', 'AR', 'AZ', 'CA', 'CO', 'CT', 'DC']\nLength: 8, dtype: str ... count 53\nState  Year     Month          Period                      Indicator  Data Value Percent Complete  Percent Pending Investigation    State Name                              Footnote Footnote Symbol  Predicted Value\n   YC  2023      June 12 month-ending               Number of Deaths     57250.0              100                       0.160699 New York City Underreported due to incomplete data.               *              NaN\n   YC  2023      June 12 month-ending Number of Drug Overdose Deaths      3254.0              100                       0.160699 New York City Underreported due to incomplete data.               *           3305.0\n   YC  2023     March 12 month-ending               Number of Deaths     57413.0              100                       0.167210 New York City Underreported due to incomplete data.               *              NaN\n   YC  2023     March 12 month-ending Number of Drug Overdose Deaths      3169.0              100                       0.167210 New York City Underreported due to incomplete data.               *           3223.0\n   YC  2023       May 12 month-ending               Number of Deaths     57458.0              100                       0.163598 New York City Underreported due to incomplete data.               *              NaN\n   YC  2023       May 12 month-ending Number of Drug Overdose Deaths      3208.0              100                       0.163598 New York City Underreported due to incomplete data.               *           3263.0\n   YC  2023  November 12 month-ending Number of Drug Overdose Deaths      3151.0              100                       0.116337 New York City Underreported due to incomplete data.               *           3181.0\n   YC  2023  November 12 month-ending               Number of Deaths     55872.0              100                       0.116337 New York City Underreported due to incomplete data.               *              NaN\n   YC  2023   October 12 month-ending               Number of Deaths     56194.0              100                       0.153041 New York City Underreported due to incomplete data.               *              NaN\n   YC  2023   October 12 month-ending Number of Drug Overdose Deaths      3234.0              100                       0.153041 New York City Underreported due to incomplete data.               *           3285.0\n   YC  2023 September 12 month-ending Number of Drug Overdose Deaths      3243.0              100                       0.163199 New York City Underreported due to incomplete data.               *           3296.0\n   YC  2023 September 12 month-ending               Number of Deaths     56373.0              100                       0.163199 New York City Underreported due to incomplete data.               *              NaN\n</output>",
+      "extra": {
+        "raw_output": "rows 69000 years 2015 2024\nindicators: ['Percent with drugs specified', 'Cocaine (T40.5)', 'Natural & semi-synthetic opioids, incl. methadone (T40.2, T40.3)', 'Synthetic opioids, excl. methadone (T40.4)', 'Opioids (T40.0-T40.4,T40.6)', 'Psychostimulants with abuse potential (T43.6)', 'Natural & semi-synthetic opioids (T40.2)', 'Methadone (T40.3)', 'Number of Deaths', 'Natural, semi-synthetic, & synthetic opioids, incl. methadone (T40.2-T40.4)', 'Heroin (T40.1)', 'Number of Drug Overdose Deaths']\nstates: <ArrowStringArray>\n['AK', 'AL', 'AR', 'AZ', 'CA', 'CO', 'CT', 'DC']\nLength: 8, dtype: str ... count 53\nState  Year     Month          Period                      Indicator  Data Value Percent Complete  Percent Pending Investigation    State Name                              Footnote Footnote Symbol  Predicted Value\n   YC  2023      June 12 month-ending               Number of Deaths     57250.0              100                       0.160699 New York City Underreported due to incomplete data.               *              NaN\n   YC  2023      June 12 month-ending Number of Drug Overdose Deaths      3254.0              100                       0.160699 New York City Underreported due to incomplete data.               *           3305.0\n   YC  2023     March 12 month-ending               Number of Deaths     57413.0              100                       0.167210 New York City Underreported due to incomplete data.               *              NaN\n   YC  2023     March 12 month-ending Number of Drug Overdose Deaths      3169.0              100                       0.167210 New York City Underreported due to incomplete data.               *           3223.0\n   YC  2023       May 12 month-ending               Number of Deaths     57458.0              100                       0.163598 New York City Underreported due to incomplete data.               *              NaN\n   YC  2023       May 12 month-ending Number of Drug Overdose Deaths      3208.0              100                       0.163598 New York City Underreported due to incomplete data.               *           3263.0\n   YC  2023  November 12 month-ending Number of Drug Overdose Deaths      3151.0              100                       0.116337 New York City Underreported due to incomplete data.               *           3181.0\n   YC  2023  November 12 month-ending               Number of Deaths     55872.0              100                       0.116337 New York City Underreported due to incomplete data.               *              NaN\n   YC  2023   October 12 month-ending               Number of Deaths     56194.0              100                       0.153041 New York City Underreported due to incomplete data.               *              NaN\n   YC  2023   October 12 month-ending Number of Drug Overdose Deaths      3234.0              100                       0.153041 New York City Underreported due to incomplete data.               *           3285.0\n   YC  2023 September 12 month-ending Number of Drug Overdose Deaths      3243.0              100                       0.163199 New York City Underreported due to incomplete data.               *           3296.0\n   YC  2023 September 12 month-ending               Number of Deaths     56373.0              100                       0.163199 New York City Underreported due to incomplete data.               *              NaN\n",
+        "returncode": 0,
+        "timestamp": 1794587969.36322,
+        "exception_info": ""
+      }
+    },
+    {
+      "content": "THOUGHT: The relevant measure is \u201cNumber of Drug Overdose Deaths.\u201d I\u2019ll use the December 12-month-ending values as calendar-year totals, sum the 50 states plus DC (excluding separately reported NYC and territories), and calculate the growth-amplified score for 2016\u20132023. The dataset provides both recorded and reporting-delay-adjusted predicted values, so I\u2019ll compare the resulting rankings to ensure the choice of measure does not change the highest-scoring year.\n\n```mswea_bash_command\npython3 - <<'PY'\nimport pandas as pd\np='datagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt'\nd=pd.read_csv(p,low_memory=False)\nprint('codes:',sorted(d.State.dropna().unique()))\nstates=set(['AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'])\nd=d[(d.State.isin(states)) & (d.Indicator=='Number of Drug Overdose Deaths') & (d.Period=='12 month-ending') & (d.Month=='December') & d.Year.between(2015,2023)]\nfor col in ['Data Value','Predicted Value']:\n    annual=d.groupby('Year')[col].sum(min_count=1)\n    growth=annual.pct_change()\n    score=annual*(1+growth)\n    print('\\n',col)\n    print(pd.DataFrame({'deaths':annual,'growth':growth,'score':score}).loc[2016:2023].round(4).to_string())\n    print('highest year',score.loc[2016:2023].idxmax())\nPY\n```",
+      "role": "assistant",
+      "tool_calls": null,
+      "function_call": null,
+      "provider_specific_fields": {
+        "refusal": null
+      },
+      "annotations": [],
+      "extra": {
+        "actions": [
+          {
+            "command": "python3 - <<'PY'\nimport pandas as pd\np='datagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt'\nd=pd.read_csv(p,low_memory=False)\nprint('codes:',sorted(d.State.dropna().unique()))\nstates=set(['AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'])\nd=d[(d.State.isin(states)) & (d.Indicator=='Number of Drug Overdose Deaths') & (d.Period=='12 month-ending') & (d.Month=='December') & d.Year.between(2015,2023)]\nfor col in ['Data Value','Predicted Value']:\n    annual=d.groupby('Year')[col].sum(min_count=1)\n    growth=annual.pct_change()\n    score=annual*(1+growth)\n    print('\\n',col)\n    print(pd.DataFrame({'deaths':annual,'growth':growth,'score':score}).loc[2016:2023].round(4).to_string())\n    print('highest year',score.loc[2016:2023].idxmax())\nPY"
+          }
+        ],
+        "response": {
+          "id": "chatcmpl-EjobfJJltwHXAJb9xsoBHOqlkLqEQ",
+          "created": 1794587999,
+          "model": "gpt-6-luna-2026-09-22",
+          "object": "chat.completion",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "message": {
+                "content": "THOUGHT: The relevant measure is \u201cNumber of Drug Overdose Deaths.\u201d I\u2019ll use the December 12-month-ending values as calendar-year totals, sum the 50 states plus DC (excluding separately reported NYC and territories), and calculate the growth-amplified score for 2016\u20132023. The dataset provides both recorded and reporting-delay-adjusted predicted values, so I\u2019ll compare the resulting rankings to ensure the choice of measure does not change the highest-scoring year.\n\n```mswea_bash_command\npython3 - <<'PY'\nimport pandas as pd\np='datagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt'\nd=pd.read_csv(p,low_memory=False)\nprint('codes:',sorted(d.State.dropna().unique()))\nstates=set(['AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'])\nd=d[(d.State.isin(states)) & (d.Indicator=='Number of Drug Overdose Deaths') & (d.Period=='12 month-ending') & (d.Month=='December') & d.Year.between(2015,2023)]\nfor col in ['Data Value','Predicted Value']:\n    annual=d.groupby('Year')[col].sum(min_count=1)\n    growth=annual.pct_change()\n    score=annual*(1+growth)\n    print('\\n',col)\n    print(pd.DataFrame({'deaths':annual,'growth':growth,'score':score}).loc[2016:2023].round(4).to_string())\n    print('highest year',score.loc[2016:2023].idxmax())\nPY\n```",
+                "role": "assistant",
+                "tool_calls": null,
+                "function_call": null,
+                "provider_specific_fields": {
+                  "refusal": null
+                },
+                "annotations": []
+              },
+              "provider_specific_fields": {
+                "content_filter_results": {
+                  "hate": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "protected_material_code": {
+                    "detected": true,
+                    "filtered": false,
+                    "citation": {
+                      "URL": "https://github.com/clemonskvn/lightning-pup/tree/b141b2543bb3de5cc42addb8a72b4f3cc460a287/app%2Fmodels%2Fuser.js",
+                      "license": "NOASSERTION"
+                    }
+                  },
+                  "protected_material_text": {
+                    "detected": false,
+                    "filtered": false
+                  },
+                  "self_harm": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "sexual": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "violence": {
+                    "filtered": false,
+                    "severity": "safe"
+                  }
+                }
+              }
+            }
+          ],
+          "usage": {
+            "completion_tokens": 817,
+            "prompt_tokens": 7036,
+            "total_tokens": 7853,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": 0,
+              "audio_tokens": 0,
+              "reasoning_tokens": 383,
+              "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 1088,
+              "cached_tokens": 5945,
+              "cache_creation_tokens": 1088
+            },
+            "latency_checkpoint": {
+              "engine_tbt_ms": 10,
+              "engine_ttft_ms": 83,
+              "engine_ttlt_ms": 8464,
+              "pre_inference_ms": 129,
+              "service_tbt_ms": 10,
+              "service_ttft_ms": 393,
+              "service_ttlt_ms": 8736,
+              "user_visible_ttft_ms": 264
+            }
+          },
+          "moderation": null,
+          "service_tier": "default",
+          "prompt_filter_results": [
+            {
+              "prompt_index": 0,
+              "content_filter_results": {
+                "hate": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "jailbreak": {
+                  "detected": false,
+                  "filtered": false
+                },
+                "self_harm": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "sexual": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "violence": {
+                  "filtered": false,
+                  "severity": "safe"
+                }
+              }
+            }
+          ],
+          "routing": {
+            "serving_pipereplica": "d20261112164451-254e0661-prefill-r8-dp0-prefill"
+          }
+        },
+        "cost": 0.00060425,
+        "timestamp": 1794588008.241021
+      }
+    },
+    {
+      "role": "user",
+      "content": "<returncode>0</returncode>\n<output>\ncodes: ['AK', 'AL', 'AR', 'AZ', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA', 'HI', 'IA', 'ID', 'IL', 'IN', 'KS', 'KY', 'LA', 'MA', 'MD', 'ME', 'MI', 'MN', 'MO', 'MS', 'MT', 'NC', 'ND', 'NE', 'NH', 'NJ', 'NM', 'NV', 'NY', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'US', 'UT', 'VA', 'VT', 'WA', 'WI', 'WV', 'WY', 'YC']\n\n Data Value\n        deaths  growth        score\nYear                               \n2016   62514.0  0.2100   75642.6176\n2017   69206.0  0.1070   76614.3654\n2018   66368.0 -0.0410   63646.3807\n2019   69582.0  0.0484   72951.6442\n2020   90347.0  0.2984  117308.7926\n2021  104798.0  0.1599  121560.4370\n2022  106271.0  0.0141  107764.7039\n2023  104570.0 -0.0160  102896.2266\nhighest year 2021\n\n Predicted Value\n        deaths  growth        score\nYear                               \n2016   63631.0  0.2114   77080.8742\n2017   70210.0  0.1034   77469.2225\n2018   67258.0 -0.0420   64430.1177\n2019   70628.0  0.0501   74166.8557\n2020   91603.0  0.2970  118807.1248\n2021  106477.0  0.1624  123766.1597\n2022  107961.0  0.0139  109465.6829\n2023  105622.0 -0.0217  103333.6750\nhighest year 2021\n</output>",
+      "extra": {
+        "raw_output": "codes: ['AK', 'AL', 'AR', 'AZ', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA', 'HI', 'IA', 'ID', 'IL', 'IN', 'KS', 'KY', 'LA', 'MA', 'MD', 'ME', 'MI', 'MN', 'MO', 'MS', 'MT', 'NC', 'ND', 'NE', 'NH', 'NJ', 'NM', 'NV', 'NY', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'US', 'UT', 'VA', 'VT', 'WA', 'WI', 'WV', 'WY', 'YC']\n\n Data Value\n        deaths  growth        score\nYear                               \n2016   62514.0  0.2100   75642.6176\n2017   69206.0  0.1070   76614.3654\n2018   66368.0 -0.0410   63646.3807\n2019   69582.0  0.0484   72951.6442\n2020   90347.0  0.2984  117308.7926\n2021  104798.0  0.1599  121560.4370\n2022  106271.0  0.0141  107764.7039\n2023  104570.0 -0.0160  102896.2266\nhighest year 2021\n\n Predicted Value\n        deaths  growth        score\nYear                               \n2016   63631.0  0.2114   77080.8742\n2017   70210.0  0.1034   77469.2225\n2018   67258.0 -0.0420   64430.1177\n2019   70628.0  0.0501   74166.8557\n2020   91603.0  0.2970  118807.1248\n2021  106477.0  0.1624  123766.1597\n2022  107961.0  0.0139  109465.6829\n2023  105622.0 -0.0217  103333.6750\nhighest year 2021\n",
+        "returncode": 0,
+        "timestamp": 1794588008.6879308,
+        "exception_info": ""
+      }
+    },
+    {
+      "content": "THOUGHT: The 12-month-ending annual totals show that 2021 has the highest growth-amplified score, using either reported or predicted overdose death counts.\n\n```mswea_bash_command\necho COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT && echo \"[2021]\"\n```",
+      "role": "assistant",
+      "tool_calls": null,
+      "function_call": null,
+      "provider_specific_fields": {
+        "refusal": null
+      },
+      "annotations": [],
+      "extra": {
+        "actions": [
+          {
+            "command": "echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT && echo \"[2021]\""
+          }
+        ],
+        "response": {
+          "id": "chatcmpl-EjocLJYNqpMNI4sXO8PcDeKZYo4pY",
+          "created": 1794588041,
+          "model": "gpt-6-luna-2026-09-22",
+          "object": "chat.completion",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "message": {
+                "content": "THOUGHT: The 12-month-ending annual totals show that 2021 has the highest growth-amplified score, using either reported or predicted overdose death counts.\n\n```mswea_bash_command\necho COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT && echo \"[2021]\"\n```",
+                "role": "assistant",
+                "tool_calls": null,
+                "function_call": null,
+                "provider_specific_fields": {
+                  "refusal": null
+                },
+                "annotations": []
+              },
+              "provider_specific_fields": {
+                "content_filter_results": {
+                  "hate": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "protected_material_code": {
+                    "detected": false,
+                    "filtered": false
+                  },
+                  "protected_material_text": {
+                    "detected": false,
+                    "filtered": false
+                  },
+                  "self_harm": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "sexual": {
+                    "filtered": false,
+                    "severity": "safe"
+                  },
+                  "violence": {
+                    "filtered": false,
+                    "severity": "safe"
+                  }
+                }
+              }
+            }
+          ],
+          "usage": {
+            "completion_tokens": 96,
+            "prompt_tokens": 8034,
+            "total_tokens": 8130,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": 0,
+              "audio_tokens": 0,
+              "reasoning_tokens": 30,
+              "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cache_write_tokens": 998,
+              "cached_tokens": 7033,
+              "cache_creation_tokens": 998
+            },
+            "latency_checkpoint": {
+              "engine_tbt_ms": 9,
+              "engine_ttft_ms": 115,
+              "engine_ttlt_ms": 968,
+              "pre_inference_ms": 177,
+              "service_tbt_ms": 9,
+              "service_ttft_ms": 421,
+              "service_ttlt_ms": 1266,
+              "user_visible_ttft_ms": 243
+            }
+          },
+          "moderation": null,
+          "service_tier": "default",
+          "prompt_filter_results": [
+            {
+              "prompt_index": 0,
+              "content_filter_results": {
+                "hate": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "jailbreak": {
+                  "detected": false,
+                  "filtered": false
+                },
+                "self_harm": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "sexual": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "violence": {
+                  "filtered": false,
+                  "severity": "safe"
+                }
+              }
+            }
+          ],
+          "routing": {
+            "serving_pipereplica": "d20261112164451-254e0661-prefill-r8-dp0-prefill"
+          }
+        },
+        "cost": 0.00024338,
+        "timestamp": 1794588042.9921799
+      }
+    },
+    {
+      "role": "exit",
+      "content": "[2021]\n",
+      "extra": {
+        "exit_status": "Submitted",
+        "submission": "[2021]\n"
+      }
+    }
+  ],
+  "trajectory_format": "mini-swe-agent-1.1",
+  "demo": {
+    "task_id": "k-1-d-1_task_1",
+    "question": "For each year from 2016 through 2023, compute a growth-amplified overdose burden score as annual drug overdose deaths across all U.S. states multiplied by (1 + year-over-year growth rate). Which year has the highest score? Your response should be in the format [Answer].",
+    "ground_truth": "2021",
+    "model_name": "openai/gpt-6-luna",
+    "started_at": "2026-11-13T10:37:32"
+  }
+}

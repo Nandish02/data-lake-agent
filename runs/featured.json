@@ -1,0 +1,14 @@
+{
+  "k-1-d-1_task_3": {
+    "strong": "runs/k-1-d-1_task_3/strong__gpt-6-luna/20261113-110720.traj.json",
+    "qwen": "runs/k-1-d-1_task_3/strong__qwen3.5_9b/20261030-213452.traj.json"
+  },
+  "k-1-d-1_task_2": {
+    "strong": "runs/k-1-d-1_task_2/strong__gpt-6-luna/20261113-102937.traj.json",
+    "qwen": "runs/k-1-d-1_task_2/strong__qwen3.5_9b/20261030-213031.traj.json",
+    "small": "runs/k-1-d-1_task_2/small__qwen2.5_3b/20261030-212541.traj.json"
+  },
+  "k-1-d-1_task_1": {
+    "strong": "runs/k-1-d-1_task_1/strong__gpt-6-luna/20261113-103732.traj.json"
+  }
+}

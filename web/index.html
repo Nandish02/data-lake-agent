@@ -1,0 +1,777 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Agents on LakeQA</title>
+<link rel="stylesheet" href="styles.css">
+<script src="data/runs.js"></script>
+</head>
+<body>
+<div class="deck" id="deck">
+
+<!-- 1 ─────────────────────────────── TITLE -->
+<section class="slide title-slide">
+  <div class="title-solo">
+    <div class="kicker">Data agents</div>
+    <h1>Letting an LLM loose<br>in a data lake<span class="caret"></span></h1>
+    <p class="muted" style="font-size:clamp(20px,1.75vw,30px);margin:0;max-width:30em">mini-swe-agent × a mini LakeQA: a frontier model vs. a small model, step by step</p>
+    <div class="title-author">
+      <div class="name">Nandish Chokshi</div>
+      <div class="aff">github.com/Nandish02/data-lake-agent</div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 ─────────────────────────────── THE QUESTION -->
+<section class="slide">
+  <div class="kicker">The problem</div>
+  <h2>A question, and a lake of files nobody has read</h2>
+  <div class="grow" style="display:flex;flex-direction:column;justify-content:center;padding-bottom:4vh">
+    <div class="bento">
+      <div class="card tile q-tile span-3 accent-bar"><div class="q-label"><span class="ico" style="--c:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span><span>lakeqa_mini/k-1-d-1/task_3 · the question the agent gets</span></div><p class="q" id="hero-question"></p></div>
+      <div class="card tile accent-bar" style="--c:var(--ph-explore)"><div class="tile-head"><span class="ico" style="--c:var(--ph-explore)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span><span class="tile-num">01</span></div><h3>Find</h3><p>Four CTA folders with similar names: annual totals, bus routes by month, daily totals, train stations. Nothing is called <code>bus.csv</code>.</p></div>
+      <div class="card tile accent-bar" style="--c:var(--ph-inspect)"><div class="tile-head"><span class="ico" style="--c:var(--ph-inspect)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="tile-num">02</span></div><h3>Understand</h3><p>The data is in <code>files/rows.txt</code> (a CSV, despite the name), next to a 2.5 MB catalog dump. Bus rides are one column: <code>year,bus,rail,…</code></p></div>
+      <div class="card tile accent-bar" style="--c:var(--ph-compute)"><div class="tile-head"><span class="ico" style="--c:var(--ph-compute)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg></span><span class="tile-num">03</span></div><h3>Compute</h3><p>Change from the year before → PIAL → lowest year in 2006–2010 → <code>[YYYY]</code>. <b>The trap:</b> 2006's change needs <b>2005</b>.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 ─────────────────────────────── IN PLAIN TERMS -->
+<section class="slide">
+  <div class="kicker">In plain terms</div>
+  <h2>Database vs. data lake, and where the agent fits in</h2>
+  <div class="row grow">
+    <div class="col center" style="flex:1.15">
+      <table class="score compare">
+        <tr><th></th><th>Database / warehouse</th><th>Data lake</th></tr>
+        <tr><td>Think of it as</td><td>a library with a catalog</td><td>a shared drive nobody organized</td></tr>
+        <tr><td>What's in it</td><td>clean tables</td><td>raw files as-is: CSV, JSON, PDF, HTML…</td></tr>
+        <tr><td>Schema</td><td>decided <b>before</b> loading</td><td>worked out <b>when you read it</b></td></tr>
+        <tr><td>To answer a question</td><td>write one SQL query</td><td>find the file → open it → parse it → compute</td></tr>
+        <tr><td>Example</td><td class="mono">SELECT … FROM sales</td><td>LakeQA: 40M files in an S3 bucket</td></tr>
+      </table>
+    </div>
+    <div class="col center">
+      <div class="card">
+        <h3>The analogy: an intern on day one</h3>
+        <p class="small muted" style="margin-top:0">They get access to the shared drive and one question from their manager.</p>
+        <ul class="phase-list">
+          <li style="--c:var(--ph-explore)"><b>Explore:</b> browse folders for anything that says "CTA" or "bus"</li>
+          <li style="--c:var(--ph-inspect)"><b>Inspect:</b> open the file. What are the columns? What's the date format?</li>
+          <li style="--c:var(--ph-compute)"><b>Compute:</b> write a quick script and check that the numbers look sane</li>
+          <li style="--c:var(--ph-answer)"><b>Answer:</b> reply in exactly the format the manager asked for</li>
+        </ul>
+        <p style="margin-bottom:0">A <b class="hl">data agent</b> is that intern, with an LLM as the brain and a terminal as the hands.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 ─────────────────────────────── WHAT IS A DATA AGENT -->
+<section class="slide">
+  <div class="kicker">Concept</div>
+  <h2>What is a data agent?</h2>
+  <div class="row grow">
+    <div class="col">
+      <ul>
+        <li>An <b>LLM in a loop</b> that can <b>act</b> on data: list folders, open files, run code</li>
+        <li>After every action it <b>sees the result</b> and decides what to do next</li>
+        <li>It stops when it believes it has the answer</li>
+      </ul>
+      <div class="card" style="margin-top:3vh">
+        <div class="legend" style="font-size:clamp(16px,1.3vw,22px);gap:1.6em">
+          <span style="--c:var(--ph-explore)">Explore</span><span style="--c:var(--ph-inspect)">Inspect</span><span style="--c:var(--ph-compute)">Compute</span><span style="--c:var(--ph-answer)">Answer</span>
+        </div>
+        <p class="muted small" style="margin:.6em 0 0">These are the four phases you'll see color-coded in every trace.</p>
+      </div>
+    </div>
+    <div class="col">
+      <table class="score">
+        <tr><th>Approach</th><th>Needs</th><th>Breaks when…</th></tr>
+        <tr><td>Text-to-SQL</td><td>one DB, known schema</td><td>the data is thousands of files</td></tr>
+        <tr><td>RAG</td><td>a search index</td><td>the answer must be computed</td></tr>
+        <tr><td><b class="hl">Data agent</b></td><td>a shell + an LLM</td><td>the LLM is weak (this project)</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 5 ─────────────────────────────── LAKEQA FIGURE -->
+<section class="slide">
+  <div class="kicker">Benchmark · LakeQA (ICML 2026)</div>
+  <h2 style="margin-bottom:.3em">What a LakeQA question looks like</h2>
+  <div class="row grow">
+    <div class="col" style="flex:1.55;align-items:center;justify-content:center">
+      <img src="media/lakeqa_fig1.png" alt="LakeQA example: an 8-hop question across Wikipedia and data.gov" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:12px;background:#fff;padding:.6vw">
+    </div>
+    <div class="col center">
+      <ul>
+        <li>Questions over a <b>~40M-file lake</b> (9.5 TB) from data.gov and Wikipedia</li>
+        <li>Each <b>hop</b> = search → open a document → extract a fact that feeds the next hop</li>
+        <li>Mixed formats: CSV, JSON, PDF, HTML, text</li>
+        <li>1,007 expert-checked tasks; <b>LakeQA-mini</b> = 135</li>
+      </ul>
+      <p class="faint small" style="margin-top:2vh">Figure: github.com/lakeagent/datalake-qa (MIT)</p>
+    </div>
+  </div>
+</section>
+
+<!-- 6 ─────────────────────────────── TASK ANATOMY -->
+<section class="slide">
+  <div class="kicker">Benchmark · one task, up close</div>
+  <h2>Anatomy of the main task <span class="muted" style="font-size:.6em">lakeqa_mini/k-1-d-1/task_3</span></h2>
+  <div class="row grow">
+    <div class="col" style="flex:1.2"><pre class="code win" data-title="tasks/k-1-d-1_task_3.json" id="task-json"></pre></div>
+    <div class="col">
+      <div class="card">
+        <h3>How it's graded</h3>
+        <ul class="small">
+          <li>The agent must reply in the format <code>[Answer]</code></li>
+          <li><b>Exact match</b> against the ground truth (70% of LakeQA answers are numbers or dates)</li>
+          <li>The ground truth comes from the reference solution. I re-ran it on our data and got <span class="mono good" id="truth-check">[2006]</span></li>
+        </ul>
+      </div>
+      <div class="card" style="margin-top:1.5vh">
+        <h3>The <code>datasets_used</code> field</h3>
+        <p class="small muted" style="margin:0">It lists the files that contain the evidence. The agent never sees it; finding those files is the whole challenge.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7 ─────────────────────────────── LAKEQA RESULTS -->
+<section class="slide">
+  <div class="kicker">Benchmark · results from the paper</div>
+  <h2>Frontier models struggle, and mostly at search</h2>
+  <div class="row grow" style="gap:5vw;padding-top:5vh">
+    <div class="col" style="flex:.8">
+      <h3>Exact match on LakeQA-mini <span class="faint">(Table 4)</span></h3>
+      <div class="bars" id="paper-bars" style="margin-top:1vh"></div>
+    </div>
+    <div class="col" style="flex:1.2">
+      <h3>Where GPT-5.2's 135 runs end <span class="faint">(Table 6)</span></h3>
+      <div class="bars main" id="paper-fail" style="margin-top:2vh"></div>
+      <div class="callout"><div class="v">87/135</div><p>runs fail at search: the right dataset is never found, or found and never opened. "Search and exploration (document discovery) is the primary bottleneck; reasoning over found evidence is secondary." (Wang et al., 2026)</p></div>
+      <p class="faint small" style="margin-top:1vh">Numbers from the published version, arXiv:2606.10460 (Tables 4 and 6). The earlier OpenReview submission reports different figures.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 8 ─────────────────────────────── LAKEQA TOOLS VS BASH -->
+<section class="slide">
+  <div class="kicker">Two ways to give an agent hands</div>
+  <h2>LakeQA's 8 tools vs. mini-swe-agent's 1 tool</h2>
+  <table class="score" style="font-size:clamp(15px,1.25vw,22px)">
+    <tr><th>LakeQA harness tool <span class="faint">(evaluation/tools_schema.py)</span></th><th>What it does</th><th>mini-swe-agent: just bash</th></tr>
+    <tr><td class="mono">search / search_keyword</td><td>find datasets by name or tag</td><td class="mono">ls datagov | grep -i cta</td></tr>
+    <tr><td class="mono">list_files</td><td>files inside a dataset</td><td class="mono">ls datagov/&lt;dataset&gt;/files</td></tr>
+    <tr><td class="mono">inspect_file</td><td>header, delimiter, keys</td><td class="mono">head -n 5 …/rows.txt</td></tr>
+    <tr><td class="mono">download / get_sandbox_info</td><td>copy files into a sandbox</td><td class="mono"><span class="faint">(already local)</span></td></tr>
+    <tr><td class="mono">execute_code</td><td>run Python on the files</td><td class="mono">python3 - &lt;&lt;'EOF' … EOF</td></tr>
+    <tr><td class="mono">submit_answer</td><td>final answer as [Answer]</td><td class="mono">echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT</td></tr>
+  </table>
+  <p class="muted" style="margin-top:2.5vh">Fewer tools means a simpler agent, but it puts more weight on the model knowing how to use a shell well.</p>
+</section>
+
+<!-- 9 ─────────────────────────────── AN AGENT IS A LOOP -->
+<section class="slide">
+  <div class="kicker">The agent · from the authors' tutorial (minimal-agent.com)</div>
+  <h2>An AI agent is just a loop</h2>
+  <div class="row grow">
+    <div class="col" style="flex:1.3">
+<pre class="code win" data-title="minimal_agent.py">messages = [{<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: <span class="s">"Help me fix the ValueError in main.py"</span>}]
+<span class="k">while</span> <span class="k">True</span>:
+    lm_output = <span class="f">query_lm</span>(messages)
+    messages.append({<span class="s">"role"</span>: <span class="s">"assistant"</span>, <span class="s">"content"</span>: lm_output})  <span class="c"># remember what the LM said</span>
+    action = <span class="f">parse_action</span>(lm_output)  <span class="c"># separate the action from output</span>
+    <span class="k">if</span> action == <span class="s">"exit"</span>:
+        <span class="k">break</span>
+    output = <span class="f">execute_action</span>(action)
+    messages.append({<span class="s">"role"</span>: <span class="s">"user"</span>, <span class="s">"content"</span>: output})  <span class="c"># send command output back</span></pre>
+      <p class="faint small">Pseudocode quoted from "Building a minimal AI agent from scratch", Lieret, Jimenez, Yang &amp; Press (minimal-agent.com)</p>
+    </div>
+    <div class="col">
+      <div class="card">
+        <h3>Only three things to implement</h3>
+        <ol class="small" style="padding-left:1.2em">
+          <li><code>query_lm</code>: call any LLM API</li>
+          <li><code>parse_action</code>: pull the command out of the reply</li>
+          <li><code>execute_action</code>: run it, capture the output</li>
+        </ol>
+        <p class="muted small">Swap the task for "answer this question from the lake", and this loop <em>is</em> a data agent.</p>
+      </div>
+      <div class="card" style="margin-top:1.5vh">
+        <h3>The algorithm has a name: ReAct</h3>
+        <p class="small" style="margin:0"><b>Reason</b> (the THOUGHT) → <b>Act</b> (one command) → <b>Observe</b> (its output) → repeat until done. Yao et al., ICLR 2023. The model picks each next step by greedy decoding (temperature 0).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 ─────────────────────────────── MINI-SWE-AGENT -->
+<section class="slide">
+  <div class="kicker">The agent · mini-swe-agent</div>
+  <h2>mini-swe-agent: that loop, production-ready</h2>
+  <div class="row grow">
+    <div class="col">
+      <ul>
+        <li><b>~100 lines</b> for the agent class</li>
+        <li><b>Bash is the only tool</b>, so it works with any model</li>
+        <li><b>Linear history</b>: the trajectory <em>is</em> the message list</li>
+        <li><b>Stateless actions</b>: each command is a fresh <code>subprocess.run</code></li>
+        <li>&gt;74% on SWE-bench Verified with a strong model</li>
+      </ul>
+      <p class="muted" style="margin-top:2vh">The scaffold is tiny, so <b>the differences come from the model</b>.</p>
+    </div>
+    <div class="col" style="align-items:center;justify-content:center">
+      <img src="media/mini.gif" alt="The mini CLI in action (official demo)" style="max-width:100%;max-height:60vh;border-radius:12px;border:1px solid var(--border)">
+      <p class="faint small">Official demo GIF · github.com/SWE-agent/swe-agent-media (MIT)</p>
+    </div>
+  </div>
+</section>
+
+<!-- 11 ─────────────────────────────── CONTRACT -->
+<section class="slide">
+  <div class="kicker">The contract between model and agent (text-based mode)</div>
+  <h2>Every reply must follow one strict format</h2>
+  <div class="grid-3 grow contract">
+    <div class="card">
+      <h3><span class="dot" style="--c:var(--good)"></span>Valid reply</h3>
+<pre class="code">THOUGHT: Let me see which
+datasets exist.
+
+<span class="w">```mswea_bash_command</span>
+ls datagov wikipedia
+<span class="w">```</span></pre>
+      <p class="small muted">Exactly one block, so it runs. The output comes back as the next message.</p>
+    </div>
+    <div class="card">
+      <h3><span class="dot" style="--c:var(--bad)"></span>Format error</h3>
+<pre class="code" style="color:var(--bad)">```bash
+ls datagov
+```</pre>
+      <p class="small muted">Wrong fence (or 0 or 2+ blocks), so nothing runs. The agent replies <span class="mono" style="color:var(--text)">"Please always provide EXACTLY ONE action in triple backticks…"</span> Three in a row and the run is aborted.</p>
+    </div>
+    <div class="card">
+      <h3><span class="dot" style="--c:var(--ph-answer)"></span>Submitting</h3>
+<pre class="code"><span class="s">echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT \
+  &amp;&amp; echo "[2006]"</span></pre>
+      <p class="small muted">If the output starts with the marker, the agent stops. Everything after it is the answer that gets graded.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 12 ─────────────────────────────── LOOP DIAGRAM -->
+<section class="slide">
+  <div class="kicker">How it works</div>
+  <h2>One step of the loop</h2>
+  <div class="loop-wrap">
+    <svg viewBox="0 0 1250 490" role="img" aria-label="Agent loop">
+      <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor" style="color:var(--faint)"/></marker></defs>
+      <path class="loop-edge" id="e6" d="M1080,70 C990,8 290,8 175,64"/>
+      <text class="loop-label" x="625" y="56" text-anchor="middle" style="fill:var(--bad)">format error → append "please use exactly 1 block" and retry</text>
+      <g class="loop-node" id="n-prompt"><rect x="20" y="70" width="250" height="110"/><text x="145" y="118" text-anchor="middle">Messages</text><text class="sub" x="145" y="148" text-anchor="middle">system + question</text></g>
+      <g class="loop-node" id="n-lm"><rect x="500" y="70" width="250" height="110"/><text x="625" y="118" text-anchor="middle">LLM</text><text class="sub" x="625" y="148" text-anchor="middle">model.query()</text></g>
+      <g class="loop-node" id="n-parse"><rect x="980" y="70" width="250" height="110"/><text x="1105" y="118" text-anchor="middle">Parse action</text><text class="sub" x="1105" y="148" text-anchor="middle">regex: 1 block?</text></g>
+      <g class="loop-node" id="n-exec"><rect x="980" y="330" width="250" height="110"/><text x="1105" y="378" text-anchor="middle">Run in bash</text><text class="sub" x="1105" y="408" text-anchor="middle">subprocess.run</text></g>
+      <g class="loop-node" id="n-obs"><rect x="500" y="330" width="250" height="110"/><text x="625" y="378" text-anchor="middle">Observation</text><text class="sub" x="625" y="408" text-anchor="middle">stdout + returncode</text></g>
+      <g class="loop-node" id="n-done"><rect x="20" y="330" width="250" height="110"/><text x="145" y="378" text-anchor="middle">Submit &amp; grade</text><text class="sub" x="145" y="408" text-anchor="middle">COMPLETE_TASK…</text></g>
+      <path class="loop-edge" id="e1" d="M270,125 L495,125"/>
+      <path class="loop-edge" id="e2" d="M750,125 L975,125"/>
+      <path class="loop-edge" id="e3" d="M1105,180 L1105,325"/>
+      <path class="loop-edge" id="e4" d="M980,385 L755,385"/>
+      <path class="loop-edge" id="e5" d="M590,330 C520,262 240,262 165,186"/>
+      <path class="loop-edge" id="e7" d="M500,385 L275,385"/>
+      <text class="loop-label" x="1092" y="262" text-anchor="end">valid → execute</text>
+      <text class="loop-label" x="300" y="300" text-anchor="middle">append output &amp; repeat</text>
+      <text class="loop-label" x="388" y="470" text-anchor="middle">output starts with the submit marker</text>
+    </svg>
+  </div>
+  <div class="row" style="flex:0 0 auto;min-height:5.5em">
+    <p class="frag" data-hl="n-prompt,e1,n-lm">① The question goes into the message list and the LLM is queried.</p>
+    <p class="frag" data-hl="n-lm,e2,n-parse">② The reply is parsed: exactly one <code>mswea_bash_command</code> block?</p>
+    <p class="frag" data-hl="n-parse,e6,n-prompt">③ No? A <b class="bad">format error</b> message is appended and we loop.</p>
+    <p class="frag" data-hl="e3,n-exec,e4,n-obs,e5,n-prompt">④ Yes? Run it, append the output as the next message, and loop.</p>
+    <p class="frag" data-hl="n-obs,e7,n-done">⑤ When the output starts with the submit marker, stop and grade.</p>
+  </div>
+</section>
+
+<!-- 13 ─────────────────────────────── ONE REAL STEP -->
+<section class="slide">
+  <div class="kicker">Zooming in · real messages from the recorded GPT-6 Luna run</div>
+  <h2>The model only ever sees text</h2>
+  <div class="row grow">
+    <div class="col" style="flex:1.35">
+      <div class="chat">
+        <div class="frag">
+          <div class="msg sys"><span class="role">system</span>You are a data agent that answers questions by exploring a data lake with bash commands. Your response must contain exactly ONE bash code block…</div>
+          <div class="msg user" style="margin-top:.8vh"><span class="role">user · the task</span>Answer this question using the data in the data lake: &lt;question&gt;Define a yearly Passenger Instability-Adjusted Load (PIAL) as annual total CTA bus passengers…&lt;/question&gt;</div>
+        </div>
+        <div class="msg asst frag"><span class="role">assistant · step 1</span>THOUGHT: I'll locate the CTA bus ridership data and inspect its files…
+<pre>```mswea_bash_command
+find . -iname '*cta*' -o -iname '*bus*passenger*' | head -80
+```</pre></div>
+        <div class="msg user frag"><span class="role">user · what the shell printed</span><pre>&lt;returncode&gt;0&lt;/returncode&gt;
+&lt;output&gt;
+./datagov/cta-ridership-l-station-entries-monthly-…
+./datagov/cta-ridership-daily-boarding-totals
+./datagov/cta-ridership-bus-routes-monthly-…
+./datagov/public-health-…-life-expectancy-…  <span class="faint">(ex-pe-CTA-ncy)</span>
+./datagov/cta-ridership-annual-boarding-totals
+&lt;/output&gt;</pre></div>
+        <div class="msg asst frag"><span class="role">assistant · step 2</span>THOUGHT: The annual boarding totals dataset is likely to provide passenger totals by year…
+<pre>find datagov/cta-ridership-annual-boarding-totals -maxdepth 2 -type f</pre></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card frag">
+        <h3>What to notice</h3>
+        <ul class="small">
+          <li>The agent is a <b>chat transcript</b>. Each step adds two messages: the model's command, then the shell's output.</li>
+          <li>The model never opens a file. It only reads what <code>find</code>, <code>head</code> or <code>python3</code> <b>printed</b>.</li>
+          <li>The whole transcript is re-sent on every call. That's its only memory.</li>
+        </ul>
+      </div>
+      <div class="card frag" style="margin-top:1.5vh">
+        <h3><span class="dot" style="--c:var(--warn)"></span>Problems are just more text</h3>
+<pre class="code small">&lt;warning&gt;
+The output of your last command was too long.
+Please try a different command…
+&lt;/warning&gt;</pre>
+        <p class="small muted" style="margin:.5em 0 0">Step 5 printed a 35 KB file of web-crawl headers. mini-swe-agent sent back this warning with only the start and end, and the model moved on to another file. A crash comes back the same way, as a traceback. The agent needs no special error handling.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 14 ─────────────────────────────── OFFICIAL CONTROL FLOW -->
+<section class="slide">
+  <div class="kicker">The actual implementation · control flow from the mini-swe-agent docs</div>
+  <h2 style="margin-bottom:.2em">How <code>DefaultAgent</code> really runs</h2>
+  <div class="grow" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:0">
+    <div id="official-flow" style="width:100%;flex:1;min-height:0;display:flex;align-items:center;justify-content:center">
+    <svg viewBox="0 0 1410 620" role="img" aria-label="mini-swe-agent control flow" style="width:100%;height:100%">
+      <defs><marker id="cf-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--muted)"/></marker></defs>
+      <!-- Agent.run(task) -->
+      <rect class="cf-cluster" x="20" y="20" width="580" height="590"/>
+      <text class="cf-title" x="40" y="52">Agent.run(task)</text>
+      <rect class="cf-node" x="140" y="75" width="300" height="52"/><text class="cf-label" x="290" y="108">Initialize messages</text>
+      <rect class="cf-node cf-hot" x="140" y="160" width="300" height="52"/><text class="cf-label" x="290" y="193">Agent.step()</text>
+      <polygon class="cf-node" points="290,235 400,290 290,345 180,290"/><text class="cf-label" x="290" y="296">Exception?</text>
+      <rect class="cf-node" x="335" y="372" width="245" height="64"/><text class="cf-label" x="457" y="398">Agent.add_messages</text><text class="cf-sub" x="457" y="423" text-anchor="middle">error → message</text>
+      <polygon class="cf-node" points="290,438 425,492 290,546 155,492"/><text class="cf-label cf-small" x="290" y="498">last role == "exit"?</text>
+      <rect class="cf-node" x="165" y="566" width="250" height="36"/><text class="cf-label" x="290" y="591">Return result</text>
+      <path class="cf-edge" d="M290,127 L290,158"/>
+      <path class="cf-edge" d="M290,212 L290,233"/>
+      <path class="cf-edge" d="M400,290 L457,290 L457,370"/><text class="cf-yn" x="415" y="282">yes</text>
+      <path class="cf-edge" d="M290,345 L290,436"/><text class="cf-yn" x="300" y="395">no</text>
+      <path class="cf-edge" d="M457,436 L457,492 L427,492"/>
+      <path class="cf-edge" d="M155,492 L60,492 L60,186 L138,186"/><text class="cf-yn" x="70" y="478">no → next step</text>
+      <path class="cf-edge" d="M290,546 L290,564"/><text class="cf-yn" x="300" y="560">yes</text>
+
+      <!-- Agent.step() -->
+      <rect class="cf-cluster" x="660" y="20" width="720" height="150"/>
+      <text class="cf-title" x="680" y="52">Agent.step()</text><text class="cf-sub" x="1360" y="52" text-anchor="end">one iteration</text>
+      <rect class="cf-node" x="690" y="80" width="300" height="60"/><text class="cf-label" x="840" y="117">Agent.query()</text>
+      <rect class="cf-node" x="1050" y="80" width="300" height="60"/><text class="cf-label" x="1200" y="117">Agent.execute_actions()</text>
+      <path class="cf-edge" d="M990,110 L1048,110"/>
+
+      <!-- Agent.query() -->
+      <rect class="cf-cluster" x="660" y="215" width="720" height="170"/>
+      <text class="cf-title" x="680" y="247">Agent.query()</text><text class="cf-sub" x="1360" y="247" text-anchor="end">checks step &amp; cost limits → LimitsExceeded</text>
+      <rect class="cf-node" x="690" y="275" width="300" height="60"/><text class="cf-label" x="840" y="312">Model.query(messages)</text>
+      <rect class="cf-node" x="1050" y="275" width="300" height="60"/><text class="cf-label" x="1200" y="312">Agent.add_messages</text>
+      <path class="cf-edge" d="M990,305 L1048,305"/>
+      <text class="cf-sub" x="680" y="370" text-anchor="start">parsing the reply raises FormatError if there isn't exactly 1 action</text>
+
+      <!-- Agent.execute_actions() -->
+      <rect class="cf-cluster" x="660" y="430" width="720" height="180"/>
+      <text class="cf-title" x="680" y="462">Agent.execute_actions(reply)</text>
+      <rect class="cf-node" x="680" y="488" width="215" height="70"/><text class="cf-label cf-small" x="787" y="517">Environment</text><text class="cf-label cf-small" x="787" y="543">.execute(cmd)</text>
+      <rect class="cf-node" x="920" y="488" width="215" height="70"/><text class="cf-label cf-small" x="1027" y="517">Model.format_</text><text class="cf-label cf-small" x="1027" y="543">observation_messages</text>
+      <rect class="cf-node" x="1160" y="488" width="200" height="70"/><text class="cf-label cf-small" x="1260" y="530">Agent.add_messages</text>
+      <path class="cf-edge" d="M895,523 L918,523"/>
+      <path class="cf-edge" d="M1135,523 L1158,523"/>
+      <text class="cf-sub" x="680" y="595" text-anchor="start">execute() raises Submitted when the output starts with the submit marker</text>
+
+      <!-- "calls" links -->
+      <path class="cf-call" d="M440,186 C540,186 560,110 686,110"/>
+      <path class="cf-call" d="M960,140 L960,272"/>
+      <path class="cf-call" d="M1350,110 L1396,110 L1396,520 L1362,520"/>
+    </svg>
+    </div>
+    <p class="faint small" style="margin:.4em 0 0">Redrawn from the official diagram in mini-swe-agent.com, "Understanding the agent" (MIT) · dotted = "calls"</p>
+  </div>
+</section>
+
+<!-- 15 ─────────────────────────────── OUR MINI LAKE -->
+<section class="slide">
+  <div class="kicker">Our setup · a mini LakeQA</div>
+  <h2>10 real LakeQA dataset folders, 89 files, 48 MB</h2>
+  <div class="row grow">
+    <div class="col" style="flex:1.5">
+      <div class="metrics" style="--cols:4;margin-bottom:2vh">
+        <div class="card metric"><div class="v">10</div><div class="l">dataset folders</div></div>
+        <div class="card metric"><div class="v">89</div><div class="l">files</div></div>
+        <div class="card metric"><div class="v">48 MB</div><div class="l">on disk</div></div>
+        <div class="card metric"><div class="v" style="--c:var(--good)">3<span class="faint" style="font-size:.5em"> / 7</span></div><div class="l">needed / decoys</div></div>
+      </div>
+      <div class="lake" id="lake-grid"></div>
+      <p class="faint small" style="margin-top:1.4vh"><span class="dot" style="--c:var(--good)"></span>needed by a demo task &nbsp;&nbsp; <span class="dot"></span>decoy &nbsp;·&nbsp; folders copied verbatim from <code>s3://lakeqa-yc4103-datalake</code></p>
+    </div>
+    <div class="col">
+      <pre class="code small win" data-title="tree datagov/cta-ridership-annual-boarding-totals">datagov/cta-ridership-annual-boarding-totals/
+├── files/
+│   ├── <span class="s">rows.txt</span>        <span class="c">← the data (CSV!)</span>
+│   ├── data.txt        <span class="c">← 2.5 MB catalog dump</span>
+│   ├── columns.txt, w8km-9pzd.txt
+│   └── catalog.txt, dcat-us.txt
+├── headers.txt         <span class="c">← WARC crawl headers</span>
+├── metadata.json
+└── signed-metadata.txt</pre>
+      <p class="muted small" style="margin-top:1.5vh">Three tasks from <code>lakeqa_mini/k-1-d-1</code>: <b>CTA bus</b> (Chicago, the main task), <b>NY Lotto</b>, and <b>CDC overdose deaths</b>.</p>
+      <div class="card" style="margin-top:1.5vh;padding:1vw 1.2vw">
+        <h3 style="font-size:clamp(15px,1.2vw,20px)">What I added around mini-swe-agent</h3>
+        <p class="small muted" style="margin:0">A data-lake prompt · a fresh <b>read-only copy</b> of the lake per run · a guard that blocks network and destructive commands · live rendering and recording · a failure-mode grader. Agent, model and environment classes are unchanged v2.4.6.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 16 ─────────────────────────────── BY HAND -->
+<section class="slide">
+  <div class="kicker">The answer key · what a human who knows the lake would type</div>
+  <h2>The whole task is 3 commands, if you already know where to look</h2>
+  <div class="row grow">
+    <div class="col" style="flex:1.45;gap:1.4vh">
+      <div class="handstep frag" style="--c:var(--ph-explore)">
+        <div class="lbl">1 · explore: which folder?</div>
+<pre class="code">$ ls datagov | grep -i cta
+cta-ridership-annual-boarding-totals       <span class="c">← one row per year</span>
+cta-ridership-bus-routes-monthly-…         <span class="c">← per route, per month</span>
+cta-ridership-daily-boarding-totals        <span class="c">← per day</span>
+cta-ridership-l-station-entries-monthly-…  <span class="c">← trains, not buses</span></pre>
+      </div>
+      <div class="handstep frag" style="--c:var(--ph-inspect)">
+        <div class="lbl">2 · inspect: what's in the file?</div>
+<pre class="code">$ head -n 3 datagov/cta-ridership-annual-…/files/rows.txt
+<span class="s">year</span>,<span class="s">bus</span>,paratransit,rail,total       <span class="c">← a CSV, despite .txt</span>
+1988,430089500,435400,174436000,604960900</pre>
+      </div>
+      <div class="handstep frag" style="--c:var(--ph-compute)">
+        <div class="lbl">3 · compute</div>
+<pre class="code">$ python3 - &lt;&lt;'EOF'
+<span class="k">import</span> pandas <span class="k">as</span> pd
+bus = pd.<span class="f">read_csv</span>(<span class="s">"…/files/rows.txt"</span>).<span class="f">set_index</span>(<span class="s">"year"</span>)[<span class="s">"bus"</span>]
+bus = bus.loc[<b>2005</b>:2010]          <span class="c"># keep 2005: 2006's change needs it</span>
+pial = bus * (1 + bus.<span class="f">pct_change</span>().<span class="f">abs</span>())
+<span class="f">print</span>(pial.loc[2006:2010].<span class="f">idxmin</span>())
+EOF</pre>
+      </div>
+    </div>
+    <div class="col">
+      <div class="frag">
+        <table class="score bval">
+          <tr><th>year</th><th>bus rides</th><th>change</th><th>PIAL</th></tr>
+          <tr class="win"><td>2006</td><td class="mono">298.4 M</td><td class="mono">1.6%</td><td class="mono">303.2 M</td></tr>
+          <tr><td>2007</td><td class="mono">309.3 M</td><td class="mono">3.6%</td><td class="mono">320.5 M</td></tr>
+          <tr><td>2008</td><td class="mono">328.2 M</td><td class="mono">6.1%</td><td class="mono">348.3 M</td></tr>
+          <tr><td>2009</td><td class="mono">318.7 M</td><td class="mono">2.9%</td><td class="mono">327.9 M</td></tr>
+          <tr><td>2010</td><td class="mono">306.0 M</td><td class="mono">4.0%</td><td class="mono">318.2 M</td></tr>
+        </table>
+        <p class="small muted" style="margin:.6em 0 0">2006's change compares it with the 2005 row. <b>Drop 2005 and 2006's change becomes NaN</b>, so the lowest looks like 2010.</p>
+      </div>
+      <div class="card frag" style="margin-top:2vh">
+        <h3>The agent starts knowing none of this</h3>
+        <p class="small" style="margin:0">Which of four folders, that <code>rows.txt</code> is the data, the column names, and that it must keep a year the question never mentions: each fact costs it <b>at least one step of looking</b>. GPT-6 Luna took 9 steps.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 17 ─────────────────────────────── LIVE DEMO · STRONG -->
+<section class="slide live" data-live="strong">
+  <div class="live-bar">
+    <div>
+      <div class="kicker" style="margin:0">Demo 1 · GPT-6 Luna (frontier model) · CTA bus task</div>
+      <h2 style="margin:.15em 0 0">Watch a frontier model work</h2>
+    </div>
+    <div class="live-ctl">
+      <button data-r="go" class="go">Run <kbd>G</kbd></button>
+      <button data-r="pause">Pause <kbd>P</kbd></button>
+    </div>
+  </div>
+  <div class="live-status" data-r="status"></div>
+  <div class="row grow">
+    <div class="col" style="flex:1.75">
+      <div class="budget-row"><div class="strip" data-r="strip"></div><span class="budget" data-r="budget"></span></div>
+      <div class="traj grow" data-r="trace"></div>
+    </div>
+    <div class="col side" style="flex:.85">
+      <h3>Four checkpoints</h3>
+      <div class="checks" data-r="checks"></div>
+      <h3 style="margin-top:2vh">Where it goes in the lake</h3>
+      <div data-r="files"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 18 ─────────────────────────────── STRONG TRACE -->
+<section class="slide" data-stepper="strong-trace">
+  <div class="row grow">
+    <div class="col" style="flex:1.6">
+      <div class="kicker">Step by step · GPT-6 Luna</div>
+      <div class="traj-head" id="strong-head"></div>
+      <div class="strip" id="strong-strip"></div>
+      <div class="traj grow" id="strong-trace"></div>
+    </div>
+    <div class="col" style="flex:.8;overflow:hidden">
+      <div class="legend" style="margin-bottom:1.2vh">
+        <span style="--c:var(--ph-explore)">explore</span><span style="--c:var(--ph-inspect)">inspect</span>
+        <span style="--c:var(--ph-compute)">compute</span><span style="--c:var(--ph-answer)">answer</span><span style="--c:var(--ph-error)">error</span>
+      </div>
+      <h3>Where it went in the lake</h3>
+      <div id="strong-files"></div>
+      <p class="hint" style="margin-top:auto">→ next step · ← back · A show all · click a line to open it · L latest live run</p>
+    </div>
+  </div>
+</section>
+
+<!-- 19 ─────────────────────────────── INSPECTOR -->
+<section class="slide">
+  <div class="kicker">Tooling · mini-swe-agent's official Inspector</div>
+  <h2>Every run is a trajectory you can replay</h2>
+  <div class="row grow">
+    <div class="col center">
+      <ul>
+        <li>The trajectory <b>is</b> the message list: system, question, then reply, output, reply, output…</li>
+        <li>Saved as <code>runs/…/*.traj.json</code>, mini-swe-agent's standard format</li>
+        <li>Browse it in the project's own TUI:</li>
+      </ul>
+      <div class="cmd mono" style="font-size:clamp(20px,2vw,34px);background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:.4em .8em;margin:1.5vh 0;color:var(--text)"><span class="faint">$</span> ./demo.sh inspect</div>
+      <p class="muted small">← → steps · H/L previous/next run · q quit</p>
+    </div>
+    <div class="col" style="align-items:center;justify-content:center">
+      <img src="media/inspector.gif" alt="mini-swe-agent inspector (official demo)" style="max-width:100%;max-height:62vh;border-radius:12px;border:1px solid var(--border)">
+      <p class="faint small">Official demo GIF · github.com/SWE-agent/swe-agent-media (MIT)</p>
+    </div>
+  </div>
+</section>
+
+<!-- 20 ─────────────────────────────── LIVE DEMO · SMALL -->
+<section class="slide live" data-live="qwen">
+  <div class="live-bar">
+    <div>
+      <div class="kicker" style="margin:0">Demo 2 · qwen3.5 9B (open model, running locally) · same task</div>
+      <h2 style="margin:.15em 0 0">Same task, same agent, a 9B model</h2>
+    </div>
+    <div class="live-ctl">
+      <button data-r="go" class="go">Run <kbd>G</kbd></button>
+      <button data-r="pause">Pause <kbd>P</kbd></button>
+    </div>
+  </div>
+  <div class="live-status" data-r="status"></div>
+  <div class="row grow">
+    <div class="col" style="flex:1.75">
+      <div class="budget-row"><div class="strip" data-r="strip"></div><span class="budget" data-r="budget"></span></div>
+      <div class="traj grow" data-r="trace"></div>
+    </div>
+    <div class="col side" style="flex:.85">
+      <h3>Four checkpoints</h3>
+      <div class="checks" data-r="checks"></div>
+      <h3 style="margin-top:2vh">Where it goes in the lake</h3>
+      <div data-r="files"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 21 ─────────────────────────────── SIDE BY SIDE -->
+<section class="slide" data-stepper="sbs">
+  <div class="kicker">Side by side · GPT-6 Luna vs qwen3.5 9B · same task, same scaffold</div>
+  <div class="row grow">
+    <div class="col compact">
+      <div class="traj-head" id="sbs-strong-head"></div>
+      <div class="strip" id="sbs-strong-strip"></div>
+      <div class="traj grow" id="sbs-strong"></div>
+    </div>
+    <div class="col compact">
+      <div class="traj-head" id="sbs-small-head"></div>
+      <div class="strip" id="sbs-small-strip"></div>
+      <div class="traj grow" id="sbs-small"></div>
+    </div>
+  </div>
+  <div class="legend" style="margin-top:.8vh">
+    <span style="--c:var(--tag-format)">bad formatting</span><span style="--c:var(--tag-assume)">wrong assumption about the data</span>
+    <span style="--c:var(--tag-repeat)">repeated failure</span><span style="--c:var(--tag-premature)">premature answer</span>
+    <span class="hint" style="margin-left:auto">→ next step · A show all · click a line to open it · L latest live runs</span>
+  </div>
+</section>
+
+<!-- 22 ─────────────────────────────── FAILURE GALLERY -->
+<section class="slide">
+  <div class="kicker">Going smaller · 1–3B models · real recorded steps</div>
+  <h2 style="margin-bottom:.3em">The four characteristic mistakes</h2>
+  <div class="gallery" id="gallery"></div>
+</section>
+
+<!-- 23 ─────────────────────────────── STRONG CAN BE WRONG TOO -->
+<section class="slide">
+  <div class="kicker">Why the 9B said 2010 · one missing row</div>
+  <h2>Same file, one row apart</h2>
+  <div class="row grow">
+    <div class="col">
+      <div class="card side-by bad-side">
+        <h3><span class="dot" style="--c:var(--bad)"></span>qwen3.5 9B · steps 8–10 · <span class="bad">[2010], wrong</span></h3>
+<pre class="code">$ grep -E "^(2006|2007|2008|2009|2010)," rows.txt
+<span class="c"># keeps only the years in the question: 2005 is gone</span>
+
+year  bus_passengers  pct_change  PIAL
+2006  298433228       <b class="bad">NaN</b>         <b class="bad">NaN</b>
+2007  309271311        0.036      3.205e+08
+…
+<b class="bad">2010  306023976       -0.040      3.182e+08</b></pre>
+        <p class="quote">"2006 has NaN … since there's <b>no prior year data in our dataset</b>"</p>
+        <p class="small muted" style="margin:0">False: 2005 was in the file. It removed it itself, then submitted without checking.</p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card side-by good-side">
+        <h3><span class="dot" style="--c:var(--good)"></span>GPT-6 Luna · step 8 · <span class="good">[2006], correct</span></h3>
+<pre class="code">for y in range(2006, 2011):
+    p = rows[y]
+    change = abs(p - rows[<b class="good">y-1</b>]) / rows[<b class="good">y-1</b>]
+    print(y, p, change, p * (1 + change))
+<span class="c"># y-1 for 2006 is 2005</span>
+
+2006 298433228 0.0159 <b class="good">303167870</b>  <span class="c">← lowest</span>
+2007 309271311 0.0363 320502996
+…
+2010 306023976 0.0397 318170738</pre>
+        <p class="small muted" style="margin:0">Same file, same formula. It looked up the year before, even though the question never mentions 2005.</p>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:1.6vh;padding:.9vw 1.3vw">
+    <p class="small" style="margin:0"><b>Not a one-off:</b> all three 9B runs dropped 2005. One still answered 2006, by setting 2006's change to 0%: right answer, wrong reasoning. <b>In failure-mode terms:</b> a <b>wrong assumption</b> about the data (2006–2010 is enough) and a <b>premature answer</b> (it doubted the NaN and submitted anyway). <b>In LakeQA's terms:</b> "analyzed, but still wrong", the #1 failure for the best model in the paper (Claude Sonnet 4.5: 49 of 135).</p>
+  </div>
+</section>
+
+<!-- 24 ─────────────────────────────── SCOREBOARD -->
+<section class="slide">
+  <div class="kicker">Results · every recorded run, none dropped</div>
+  <h2>Correct answers, by model and task</h2>
+  <div class="metrics" id="score-metrics" style="display:none"></div>
+  <div class="grow" style="display:flex;flex-direction:column;justify-content:center"><table class="score results" id="scoreboard"></table></div>
+  <p class="settings"><sup>*</sup> qwen3.5 9B's one correct CTA run dropped 2005 too, and got 2006 by setting its change to 0%.<br><b>Same for every run:</b> mini-swe-agent v2.4.6 · same prompt · temperature 0 · max 20 steps · 60 s per command · exact-match grading against LakeQA's answer</p>
+</section>
+
+<!-- 25 ─────────────────────────────── TAKEAWAYS -->
+<section class="slide">
+  <div class="kicker">Takeaways</div>
+  <h2>What the demo shows</h2>
+  <div class="grow" style="display:flex;flex-direction:column;justify-content:center;padding-bottom:6vh">
+    <div class="bento">
+      <div class="card tile span-2 accent-bar"><div class="tile-head"><span class="ico" style="--c:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 10 5-10 5L2 7l10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg></span><span class="tile-num">01</span></div><h3>The scaffold is not the bottleneck</h3><p>~100 lines of loop plus bash is enough for a capable model to explore, inspect, compute and answer correctly.</p></div>
+      <div class="card tile accent-bar" style="--c:var(--tag-format)"><div class="tile-head"><span class="ico" style="--c:var(--tag-format)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span><span class="tile-num">02</span></div><h3>Small models break the contract</h3><p>They use the wrong code fence, write tool output themselves, and forget that every command runs in a fresh shell.</p></div>
+      <div class="card tile accent-bar" style="--c:var(--ph-explore)"><div class="tile-head"><span class="ico" style="--c:var(--ph-explore)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></span><span class="tile-num">03</span></div><h3>Search fails first, then analysis</h3><p>Tiny models fail at search: invented file names, decoys. The 9B got past search and failed at analysis, like the paper's best models.</p></div>
+      <div class="card tile span-2 accent-bar" style="--c:var(--ph-answer)"><div class="tile-head"><span class="ico" style="--c:var(--ph-answer)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg></span><span class="tile-num">04</span></div><h3>Making agents robust</h3><p>Native tool calling or constrained decoding, loop detection and early stopping, metadata search tools, and checking the answer before submitting it.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 26 ─────────────────────────────── IN PRACTICE -->
+<section class="slide">
+  <div class="kicker">From demo to practice</div>
+  <h2>Where you'll meet data agents, and how to keep one safe</h2>
+  <div class="row grow">
+    <div class="col center" style="flex:.9">
+      <h3>You've probably used one already</h3>
+      <ul class="small">
+        <li><b>Upload a CSV to ChatGPT or Claude</b> and ask a question: the same loop, with Python instead of bash</li>
+        <li><b>"Ask your data" features in warehouses</b> (e.g. Databricks Genie, Snowflake Cortex Analyst): the schema is known, so they sit closer to text-to-SQL</li>
+        <li><b>The hard case is this one:</b> raw files nobody documented, like logs, exports and PDFs on a shared drive</li>
+      </ul>
+    </div>
+    <div class="col center" style="flex:1.2">
+      <h3>Guardrails used in this project</h3>
+      <table class="score compare plain">
+        <tr><th>Guardrail</th><th>What it prevents</th></tr>
+        <tr><td>Fresh <b>read-only copy</b> of the lake per run</td><td>the agent editing or deleting real data</td></tr>
+        <tr><td>Block <code>sudo</code>, <code>rm -rf /</code>, <code>curl</code>, network calls</td><td>dangerous commands on my laptop</td></tr>
+        <tr><td><b>20-step limit</b>, 60 s per command</td><td>a small model looping forever</td></tr>
+        <tr><td>One strict reply format, checked by regex</td><td>ambiguous actions: they're rejected, not guessed</td></tr>
+        <tr><td><b>Save every trajectory</b></td><td>"why did it do that?" with no way to find out</td></tr>
+        <tr><td>Prompt asks to sanity-check results</td><td>NaN-style mistakes (only partly: see CTA)</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- 27 ─────────────────────────────── REFERENCES -->
+<section class="slide">
+  <div class="kicker">References</div>
+  <h2>Sources and credits</h2>
+  <div class="bento refs grow" style="align-content:start">
+    <div class="card tile span-2">
+      <h3>Papers and code</h3>
+      <ol class="ref-list">
+        <li><b>LakeQA: An Exploratory QA Benchmark over a Million-Scale Data Lake.</b> Wang et al., ICML 2026. <span class="mono">arXiv:2606.10460</span> · <span class="mono">openreview.net/forum?id=gWoEOFW0CR</span> · <span class="mono">github.com/lakeagent/datalake-qa</span> (MIT)</li>
+        <li><b>mini-swe-agent</b>, Princeton/Stanford SWE-bench team, v2.4.6. <span class="mono">github.com/SWE-agent/mini-swe-agent</span> (MIT)</li>
+        <li><b>Building a minimal AI agent from scratch.</b> Lieret, Jimenez, Yang &amp; Press. <span class="mono">minimal-agent.com</span>: the agent-loop pseudocode on slide 9</li>
+        <li><b>Understanding the agent</b>, mini-swe-agent docs: the control-flow diagram on slide 14, redrawn</li>
+        <li><b>ReAct: Synergizing Reasoning and Acting in Language Models.</b> Yao et al., ICLR 2023: the reason → act → observe loop</li>
+      </ol>
+    </div>
+    <div class="card tile">
+      <h3>Figures and data</h3>
+      <ol class="ref-list" start="6">
+        <li>LakeQA example figure, <span class="mono">figures/lakeqa_fig1.png</span> (MIT)</li>
+        <li><code>mini</code> and Inspector demo GIFs, <span class="mono">SWE-agent/swe-agent-media</span> (MIT)</li>
+        <li>LakeQA tool interface, <span class="mono">evaluation/tools/tools_schema.py</span></li>
+        <li>Dataset folders: public data.gov and Wikipedia content mirrored by the LakeQA authors</li>
+      </ol>
+    </div>
+    <div class="card tile span-3" style="flex-direction:row;align-items:center;gap:2vw">
+      <h3 style="white-space:nowrap">Reproduce it</h3>
+      <pre class="code" style="flex:1;font-size:clamp(13px,1vw,17px)">./setup.sh  <span class="c"># venv, data lake, Ollama + local models (API key goes in .env)</span>
+./demo.sh strong | qwen | small [cta|lotto|overdose]  ·  ./demo.sh small --replay  ·  ./demo.sh inspect</pre>
+    </div>
+  </div>
+</section>
+
+<!-- 28 ─────────────────────────────── THANK YOU -->
+<section class="slide title-slide">
+  <div class="kicker">Data agents</div>
+  <h1 style="font-size:clamp(56px,7vw,120px)">Thank you<span class="caret"></span></h1>
+  <div class="title-author" style="margin-top:3vh">
+    <div class="name">Nandish Chokshi</div>
+    <div class="aff">github.com/Nandish02/data-lake-agent</div>
+  </div>
+</section>
+
+<!-- 29 ─────────────────────────────── EXPLORER (backup / Q&A) -->
+<section class="slide" data-stepper="explorer">
+  <div class="kicker">Trajectory explorer · all recorded runs</div>
+  <div class="controls" style="display:flex;gap:.8em;align-items:center;margin-bottom:1vh">
+    <select id="ex-task"></select><select id="ex-run" style="max-width:60vw"></select>
+  </div>
+  <div class="traj-head" id="ex-head"></div>
+  <div class="strip" id="ex-strip"></div>
+  <div class="traj grow" id="ex-trace"></div>
+</section>
+
+</div>
+<div class="progress" id="progress"></div>
+<div class="footer" id="footer"></div>
+<div class="help" id="help">
+  <kbd>→</kbd>/<kbd>Space</kbd> next (reveals steps first) · <kbd>←</kbd> back<br>
+  <kbd>A</kbd> reveal all steps · <kbd>R</kbd> reset steps · click a folded step to open it<br>
+  <kbd>L</kbd> toggle latest live runs ↔ featured recordings<br>
+  <kbd>N</kbd> open the speaker-notes window (put it on your laptop screen)<br>
+  <kbd>T</kbd> light/dark theme · <kbd>F</kbd> fullscreen<br>
+  <kbd>Home</kbd>/<kbd>End</kbd> first/last · <kbd>?</kbd> this help
+</div>
+<script src="app.js"></script>
+</body>
+</html>
