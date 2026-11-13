@@ -4,14 +4,13 @@
 
 It runs [mini-swe-agent](https://github.com/SWE-agent/mini-swe-agent) on a small data lake built from real [LakeQA](https://github.com/lakeagent/datalake-qa) dataset folders. It records every step: what the agent explores, which commands it runs, what it sees, and how it reaches an answer. Then it puts a frontier model and small open models on the same tasks, so you can see exactly where the small models go wrong.
 
-<p align="center">
-  <a href="docs/media/overview.mp4"><img src="docs/media/overview.gif" alt="Annotated overview: the agent solving a LakeQA question, a frontier model vs. a 9B model" width="100%"></a>
-  <br><sub><b>Overview, with captions (1.5 min).</b> Click for the <a href="docs/media/overview.mp4">full-quality MP4</a>.</sub>
-</p>
+### 🎬 Demo: annotated overview (1.5 min)
+
+https://github.com/user-attachments/assets/f7f5491c-c0f8-4f34-9344-1eba09ac9df8
 
 <p align="center">
+  <b><a href="#full-slide-walk-through">🎞️ Slide walk-through (video)</a></b> &nbsp;·&nbsp;
   <b><a href="slides.pdf">📄 Slides (PDF, 29 pages)</a></b> &nbsp;·&nbsp;
-  <b><a href="docs/media/slides.mp4">🎞️ Slide walk-through (video)</a></b> &nbsp;·&nbsp;
   <b><a href="#run-it">▶️ Run it yourself</a></b>
 </p>
 
@@ -43,10 +42,11 @@ Both models explore the same folders and both find `rows.txt`. The difference co
 
 The 9B model makes a **wrong assumption** about the data and gives a **premature answer**. In LakeQA's terms, it "analyzed, but still wrong": it found the right data and still answered wrong.
 
-<p align="center">
-  <a href="docs/media/slides.mp4"><img src="docs/media/slides.gif" alt="Walk-through of all 29 slides" width="100%"></a>
-  <br><sub><b>All 29 slides, sped up.</b> <a href="docs/media/slides.mp4">MP4</a> · <a href="slides.pdf">PDF</a></sub>
-</p>
+### Full slide walk-through
+
+All 29 slides, including both agent runs replayed step by step (1:45). Also available as a [PDF](slides.pdf).
+
+https://github.com/user-attachments/assets/1dc510a6-8bd4-4a16-b9cc-bb53f97e7510
 
 ## Results
 
